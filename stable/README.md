@@ -99,6 +99,60 @@ KESC is an ERC-20 stablecoin pegged 1:1 to the Kenyan Shilling (KES), designed f
 - `balanceOfFormatted(address account)`: Get balance in human-readable format (divided by 10^18)
 - `totalSupplyFormatted()`: Get total supply in human-readable format
 
+## Operational Workflows
+
+### Minting Process Workflows
+
+#### Two-Step Authorization Process (Upgradeable Version)
+
+The upgradeable KESC contract implements a secure two-step minting process that ensures proper authorization and maintains the 1:1 KES backing:
+
+ ![img](img/Two-StepAuthorizationProcess.png)
+
+#### OneRamp On-Ramp Integration
+
+This diagram shows how KESC minting integrates with OneRamp's KES deposit process:
+
+![img](img/OneRampOn-RampIntegration.png)
+
+### Burning Process Workflows
+
+#### 1. User-Initiated Redemption
+
+![img](img/User-InitiatedRedemption.png)
+
+#### 2. Platform-Managed Redemption
+
+![img](img/Platform-ManagedRedemption.png)
+
+#### 3. Automatic Off-Ramp (Upgradeable Version)
+
+![img](img/AutomaticOff-Ramp.png)
+
+#### 4. Compliance Burn (Blacklisted Addresses)
+
+![img](img/ComplianceBurn.png)
+
+### Key Workflow Benefits
+
+#### Security Features
+- **Two-step authorization**: Prevents unauthorized minting
+- **Single-use authorization**: Prevents replay attacks
+- **Role-based access**: Granular permission control
+- **Blacklist compliance**: Regulatory requirement support
+
+#### Operational Efficiency
+- **Automatic authorization cleanup**: Prevents accumulation of stale permissions
+- **Batch operations**: Cost-effective bulk operations
+- **Meta-transaction support**: Gasless user experience
+- **Automatic off-ramp burning**: Seamless user experience
+
+#### 1:1 Peg Maintenance
+- **Controlled minting**: Only with proper KES backing
+- **Immediate burning**: Maintains supply-reserve ratio
+- **Audit trail**: Complete transaction history
+- **Reserve tracking**: Total supply reflects backing requirements
+
 ## Setup
 
 ### Prerequisites

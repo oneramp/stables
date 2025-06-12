@@ -65,7 +65,7 @@ contract KESCUpgradeable is
     ) public initializer {
         require(initialOwner != address(0), "KESC: initial owner cannot be zero address");
         
-        __ERC20_init("Kenyan Shilling Coin", "KESC");
+        __ERC20_init("KESC", "KESC");
         __AccessControl_init();
         __Pausable_init();
         __ReentrancyGuard_init();
