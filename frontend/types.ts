@@ -82,6 +82,7 @@ export type QuoteResponseT = {
 export enum TransferStatus {
   TransferStarted = "TransferStarted",
   TransferComplete = "TransferComplete",
+  TransferReceivedFiatFunds = "TransferReceivedFiatFunds",
   TransferFailed = "TransferFailed",
 }
 
@@ -90,3 +91,16 @@ export type TransferOutResponseT = {
   transferStatus: TransferStatus;
   transferAddress: string;
 };
+
+export type SubmitOnChainTransactionHashT = {
+  txHash: string;
+  transferId: string;
+};
+
+export type TransactionStatusType =
+  | "processing"
+  | "success"
+  | "cancelled"
+  | "idle"
+  | "pending"
+  | "error";

@@ -11,7 +11,7 @@ import {
   usePublicClient,
 } from "wagmi";
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import TransactionStatus from "./transaction-status";
+import SendTransactionStatus from "./send-transaction-status";
 import { parseEther } from "viem";
 import { useKescTransactions } from "@/hooks/use-kesc-transactions";
 import { useTransferStore } from "@/store/transfer";
@@ -216,20 +216,13 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   if (transactionState !== "input") {
     return (
       <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-        <TransactionStatus
+        <SendTransactionStatus
           status={transactionState}
           amount={amount}
-          reference={
-            hash ? `Tx: ${hash.slice(0, 10)}...` : "Transaction pending"
-          }
-          agent={{
-            name: recipientAddress.slice(0, 5),
-            initials: recipientAddress.slice(0, 2),
-          }}
+          hash={hash || ""}
+          recipientAddress={recipientAddress}
           date={new Date().toLocaleDateString()}
           time={new Date().toLocaleTimeString()}
-          fee="0.00"
-          type="deposit"
           onDone={handleDone}
           onTryAgain={handleTryAgain}
         />

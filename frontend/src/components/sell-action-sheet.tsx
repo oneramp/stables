@@ -1,11 +1,23 @@
+"use client";
+
+import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
+import { useKescBalance } from "@/hooks/use-kesc-balance";
+import { useKescTransactions } from "@/hooks/use-kesc-transactions";
 import { quoteSchema, type QuoteFormData } from "@/lib/validations/quote";
+import { useQuoteStore } from "@/store/quote";
+import { useTransferStore } from "@/store/transfer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppKitAccount } from "@reown/appkit/react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDoubleDown } from "react-icons/bs";
-import { createTransferOut } from "../../actions/transfer";
+import { parseEther } from "viem";
+import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { getQuoteOut } from "../../actions/quote";
+import {
+  createTransferOut,
+  submitOnChainTransactionHash,
+} from "../../actions/transfer";
 import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
 import { countries, MOCK_USER_DETAILS } from "../../data";
 import { QuoteT, TransferT } from "../../types";
@@ -15,13 +27,6 @@ import ActionSheet from "./ui/action-sheet";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { useTransferStore } from "@/store/transfer";
-import { useQuoteStore } from "@/store/quote";
-import { useKescBalance } from "@/hooks/use-kesc-balance";
-import { useKescTransactions } from "@/hooks/use-kesc-transactions";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import { parseEther } from "viem";
 
 interface SellActionSheetProps {
   isOpen: boolean;
@@ -34,6 +39,9 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
+
+  // Use separate selectors for each value
+  const transferData = useTransferStore((state) => state.transferData);
   const setTransferData = useTransferStore((state) => state.setTransferData);
   const { quoteData, setQuoteData, clearQuoteData } = useQuoteStore();
 
@@ -132,15 +140,6 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
         functionName: "transfer",
         args: [transferAddress as `0x${string}`, amountInWei],
       });
-
-      // Wait for confirmation before showing success
-      if (isConfirming) {
-        return; // The useEffect will handle state updates
-      }
-
-      if (isConfirmed) {
-        setTransactionState("success");
-      }
     } catch (err) {
       // Handle specific error cases
       if (err instanceof Error) {
@@ -169,17 +168,33 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
     }
   };
 
-  // Add useEffect to watch transaction status
+  // Submit hash when blockchain transaction is confirmed
   useEffect(() => {
-    if (isConfirming) {
-      setTransactionState("processing");
-    } else if (isConfirmed) {
-      setTransactionState("success");
-      // Refresh transactions and balances after successful confirmation
-      refetch();
-      refresh();
+    const submitHash = async () => {
+      if (isConfirmed && hash && transferData?.transferId) {
+        try {
+          await submitOnChainTransactionHash({
+            txHash: hash,
+            transferId: transferData.transferId,
+          });
+        } catch (error) {
+          // If it's "already processing", that's fine - the transfer status will update
+          if (
+            !(
+              error instanceof Error &&
+              error.message.includes("Order is already being processed")
+            )
+          ) {
+            console.error("Failed to submit transaction hash:", error);
+          }
+        }
+      }
+    };
+
+    if (isConfirmed && hash) {
+      submitHash();
     }
-  }, [isConfirming, isConfirmed, refetch, refresh]);
+  }, [isConfirmed, hash, transferData?.transferId]);
 
   const handleDone = () => {
     setTransactionState("input");

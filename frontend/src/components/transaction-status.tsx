@@ -1,12 +1,15 @@
 import React, { useEffect } from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useWindowSize } from "react-use";
 import { Button } from "./ui/button";
 import { useTransferStore } from "@/store/transfer";
 import { useQuoteStore } from "@/store/quote";
 import { useQuery } from "@tanstack/react-query";
 import { getTransfer } from "../../actions/transfer";
-import { TransferStatus } from "../../types";
+import { TransferStatus, TransactionStatusType } from "../../types";
+import Confetti from "react-confetti";
+
 import {
   Dialog,
   DialogContent,
@@ -15,14 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-type TransactionStatusType =
-  | "processing"
-  | "success"
-  | "cancelled"
-  | "idle"
-  | "pending"
-  | "error";
 
 interface TransactionStatusProps {
   status: TransactionStatusType;
@@ -58,6 +53,8 @@ const TransactionStatus = ({
     React.useState<TransactionStatusType>(initialStatus);
   const [showCancelDialog, setShowCancelDialog] = React.useState(false);
 
+  const { width, height } = useWindowSize();
+
   const transfer = useQuery({
     queryKey: ["transfer", transferData?.transferId],
     queryFn: () => getTransfer(transferData?.transferId || ""),
@@ -69,6 +66,9 @@ const TransactionStatus = ({
   useEffect(() => {
     if (transfer.data?.status) {
       switch (transfer.data.status) {
+        case TransferStatus.TransferReceivedFiatFunds:
+          setStatus("success");
+          break;
         case TransferStatus.TransferComplete:
           setStatus("success");
           break;
@@ -160,6 +160,8 @@ const TransactionStatus = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {status === "success" && <Confetti width={width} height={height} />}
 
       <div className="flex flex-col h-full">
         <div className="flex-1">
