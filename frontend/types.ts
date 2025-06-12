@@ -26,7 +26,7 @@ export type UserDetailsT = {
   additionalIdNumber: string;
 };
 
-export type TransferInT = {
+export type TransferT = {
   phone: string;
   operator: string;
   quoteId: string;
@@ -77,4 +77,48 @@ export type QuoteResponseT = {
       settlementTimeUpperBound: string;
     };
   };
+};
+
+export enum TransferStatus {
+  TransferStarted = "TransferStarted",
+  TransferComplete = "TransferComplete",
+  TransferReceivedFiatFunds = "TransferReceivedFiatFunds",
+  TransferFailed = "TransferFailed",
+}
+
+export type TransferOutResponseT = {
+  transferId: string;
+  transferStatus: TransferStatus;
+  transferAddress: string;
+};
+
+export type SubmitOnChainTransactionHashT = {
+  txHash: string;
+  transferId: string;
+};
+
+export type TransactionStatusType =
+  | "processing"
+  | "success"
+  | "cancelled"
+  | "idle"
+  | "pending"
+  | "error";
+
+export type PayBillQuoteT = {
+  fiatType: string;
+  cryptoType: string;
+  region: string;
+  fiatAmount: string;
+  network: string;
+  country: string;
+  address: string;
+  rawAmount: string;
+};
+
+export type PayBillTransferT = {
+  quoteId: string;
+  accountName: string;
+  accountNumber: string;
+  businessNumber: string;
 };

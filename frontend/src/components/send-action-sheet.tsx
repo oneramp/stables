@@ -11,9 +11,12 @@ import {
   usePublicClient,
 } from "wagmi";
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import TransactionStatus from "./transaction-status";
+import SendTransactionStatus from "./send-transaction-status";
 import { parseEther } from "viem";
 import { useKescTransactions } from "@/hooks/use-kesc-transactions";
+import { useTransferStore } from "@/store/transfer";
+import { useQuoteStore } from "@/store/quote";
+import { useKescBalance } from "@/hooks/use-kesc-balance";
 
 interface SendActionSheetProps {
   isOpen: boolean;
@@ -31,6 +34,11 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   const { address } = useAccount();
   const { refresh: refreshTransactions } = useKescTransactions();
   const publicClient = usePublicClient();
+  const setTransferData = useTransferStore((state) => state.setTransferData);
+  const { clearQuoteData } = useQuoteStore();
+
+  const { refetch } = useKescBalance();
+  const { refresh } = useKescTransactions();
 
   // Check if sender is blacklisted
   const { data: isBlacklisted } = useReadContract({
@@ -157,12 +165,6 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         throw new Error("Insufficient balance");
       }
 
-      console.log("Sending transaction:", {
-        to: recipientAddress,
-        amount: amountInWei.toString(),
-        from: address,
-      });
-
       // Send the transaction
       writeContract({
         abi: KESC_ABI,
@@ -171,7 +173,6 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         args: [recipientAddress as `0x${string}`, amountInWei],
       });
     } catch (err) {
-      console.error("Transaction error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
       setTransactionState("cancelled");
     }
@@ -184,6 +185,13 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     setRecipientAddress("");
     setError(null);
     onClose();
+
+    clearQuoteData();
+    setTransferData(null);
+
+    // Refetch all wallet balances and transactions
+    refetch();
+    refresh();
   };
 
   const handleTryAgain = () => {
@@ -208,20 +216,13 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   if (transactionState !== "input") {
     return (
       <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-        <TransactionStatus
+        <SendTransactionStatus
           status={transactionState}
           amount={amount}
-          reference={
-            hash ? `Tx: ${hash.slice(0, 10)}...` : "Transaction pending"
-          }
-          agent={{
-            name: recipientAddress.slice(0, 5),
-            initials: recipientAddress.slice(0, 2),
-          }}
+          hash={hash || ""}
+          recipientAddress={recipientAddress}
           date={new Date().toLocaleDateString()}
           time={new Date().toLocaleTimeString()}
-          fee="0.00"
-          type="deposit"
           onDone={handleDone}
           onTryAgain={handleTryAgain}
         />
@@ -234,7 +235,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col px-4 h-full">
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
@@ -276,9 +277,9 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         </div>
 
         {/* Submit Button */}
-        <div className="pt-6">
+        <div className="flex justify-center items-center pt-6 w-full">
           <Button
-            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
             onClick={handleSubmit}
             disabled={!amount || !recipientAddress || isPending}
           >

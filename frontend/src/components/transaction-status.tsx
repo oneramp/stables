@@ -1,16 +1,22 @@
-import React from "react";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
+import { useQuoteStore } from "@/store/quote";
 import { useTransferStore } from "@/store/transfer";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import React, { useEffect } from "react";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
+import { getTransfer } from "../../actions/transfer";
+import { TransactionStatusType, TransferStatus } from "../../types";
+import { Button } from "./ui/button";
 
-type TransactionStatusType =
-  | "processing"
-  | "success"
-  | "cancelled"
-  | "idle"
-  | "pending"
-  | "error";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TransactionStatusProps {
   status: TransactionStatusType;
@@ -23,13 +29,13 @@ interface TransactionStatusProps {
   date: string;
   time: string;
   fee: string;
-  type: "deposit" | "sell";
+  type: "deposit" | "sell" | "bill";
   onDone: () => void;
   onTryAgain: () => void;
 }
 
 const TransactionStatus = ({
-  status,
+  status: initialStatus,
   amount,
   reference,
   agent,
@@ -40,7 +46,49 @@ const TransactionStatus = ({
   onDone,
   onTryAgain,
 }: TransactionStatusProps) => {
-  const { transferData } = useTransferStore();
+  const { transferData, clearTransferData } = useTransferStore();
+  const { clearQuoteData } = useQuoteStore();
+  const [status, setStatus] =
+    React.useState<TransactionStatusType>(initialStatus);
+  const [showCancelDialog, setShowCancelDialog] = React.useState(false);
+
+  const { width, height } = useWindowSize();
+
+  const transfer = useQuery({
+    queryKey: ["transfer", transferData?.transferId],
+    queryFn: () => getTransfer(transferData?.transferId || ""),
+    enabled: !!transferData?.transferId,
+    refetchInterval:
+      status === "processing" || status === "pending" ? 5000 : false,
+  });
+
+  useEffect(() => {
+    if (transfer.data?.status) {
+      switch (transfer.data.status) {
+        case TransferStatus.TransferReceivedFiatFunds:
+          setStatus("success");
+          break;
+        case TransferStatus.TransferComplete:
+          setStatus("success");
+          break;
+        case TransferStatus.TransferFailed:
+          setStatus("cancelled");
+          break;
+        case TransferStatus.TransferStarted:
+          setStatus("processing");
+          break;
+        default:
+          setStatus("pending");
+      }
+    }
+  }, [transfer.data?.status]);
+
+  const handleCancel = () => {
+    setShowCancelDialog(false);
+    clearTransferData();
+    clearQuoteData();
+    onTryAgain();
+  };
 
   const statusConfig = {
     processing: {
@@ -88,66 +136,102 @@ const TransactionStatus = ({
   const transferId = transferData?.transferId || "Pending...";
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1">
-        <div className="flex flex-col items-center h-full">
-          {/* Status Icon */}
-          <div
-            className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 ${config.bgColor}`}
-          >
-            <div className="flex justify-center items-center w-16 h-16 bg-white rounded-full">
-              {config.icon}
-            </div>
-          </div>
+    <>
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Transaction</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this transaction? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 sm:justify-start">
+            <Button variant="destructive" onClick={handleCancel}>
+              Yes, cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+            >
+              No, continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          {/* Transaction Info */}
-          <div className="mb-8 text-center">
-            <p className="mb-2 text-gray-600">
-              {type === "deposit"
-                ? "Deposited via OneRamp"
-                : "Sold via OneRamp"}
-            </p>
-            <div className="flex flex-col items-center">
-              <h1 className="mb-2 text-4xl font-semibold">
-                KES {amount.toLocaleString()}
-              </h1>
-              <span
-                className={`px-3 py-1 rounded-full text-sm ${config.bgColor} ${config.textColor}`}
-              >
-                {status === "processing" || status === "pending"
-                  ? "In Progress"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
-            </div>
-          </div>
+      {status === "success" && <Confetti width={width} height={height} />}
 
-          {/* Transaction Details */}
-          <div className="w-full space-y-6 bg-neutral-100 border-[1px] border-gray-200 rounded-xl p-4">
-            <div className="">
-              <DetailItem
-                label="Reference"
-                value={`${transferId.slice(0, 4)}...${transferId.slice(-4)}`}
-              />
-              <DetailItem label="Date" value={date} />
-              <DetailItem label="Time" value={time} />
-              <DetailItem label="Via" value={agent.name} />
+      <div className="flex flex-col px-4 h-full">
+        <div className="flex-1">
+          <div className="flex flex-col items-center h-full">
+            {/* Status Icon */}
+            <div
+              className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 ${config.bgColor}`}
+            >
+              <div className="flex justify-center items-center w-16 h-16 bg-white rounded-full">
+                {config.icon}
+              </div>
+            </div>
+
+            {/* Transaction Info */}
+            <div className="mb-8 text-center">
+              <p className="mb-2 text-gray-600">
+                {type === "deposit"
+                  ? "Deposit via OneRamp"
+                  : "Sold via OneRamp"}
+              </p>
+              <div className="flex flex-col items-center">
+                <h1 className="mb-2 text-4xl font-semibold">
+                  KES {amount.toLocaleString()}
+                </h1>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${config.bgColor} ${config.textColor}`}
+                >
+                  {status === "processing" || status === "pending"
+                    ? "In Progress"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+              </div>
+            </div>
+
+            {/* Transaction Details */}
+            <div className="w-full space-y-6 bg-neutral-100 border-[1px] border-gray-200 rounded-xl p-4">
+              <div className="">
+                <DetailItem
+                  label="Reference"
+                  value={`${transferId.slice(0, 4)}...${transferId.slice(-4)}`}
+                />
+                <DetailItem label="Date" value={date} />
+                <DetailItem label="Time" value={time} />
+                <DetailItem label="Via" value={agent.name} />
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="pt-6 space-y-3">
+          {(status === "processing" || status === "pending") && (
+            <Button
+              variant="outline"
+              className="py-6 w-full text-base rounded-full"
+              onClick={() => setShowCancelDialog(true)}
+            >
+              Cancel Transaction
+            </Button>
+          )}
+          {status !== "processing" && status !== "pending" && (
+            <Button
+              className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+              onClick={status === "success" ? onDone : onTryAgain}
+            >
+              {status === "success" ? "Done" : "Try Again"}
+            </Button>
+          )}
         </div>
       </div>
-
-      {/* Action Button */}
-      {status !== "processing" && status !== "pending" && (
-        <div className="pt-6">
-          <Button
-            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
-            onClick={status === "success" ? onDone : onTryAgain}
-          >
-            {status === "success" ? "Done" : "Try Again"}
-          </Button>
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
