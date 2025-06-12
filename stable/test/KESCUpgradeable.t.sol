@@ -60,7 +60,7 @@ contract KESCUpgradeableTest is Test {
     }
     
     function testInitialization() public {
-        assertEq(kesc.name(), "Kenyan Shilling Coin");
+        assertEq(kesc.name(), "KESC");
         assertEq(kesc.symbol(), "KESC");
         assertEq(kesc.decimals(), 18);
         assertEq(kesc.totalSupply(), 0);
