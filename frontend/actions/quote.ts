@@ -20,3 +20,21 @@ export async function getQuoteIn(payload: QuoteT) {
     throw new Error("Failed to get quote from OneRamp API");
   }
 }
+
+export async function getQuoteOut(payload: QuoteT) {
+  try {
+    const response = await OneRamp.getQuoteOut(payload);
+
+    if (!response) {
+      throw new Error("No response from OneRamp API");
+    }
+
+    return response;
+  } catch (error) {
+    // Re-throw the error with more context
+    if (error instanceof Error) {
+      throw new Error(`OneRamp API Error: ${error.message}`);
+    }
+    throw new Error("Failed to get quote from OneRamp API");
+  }
+}

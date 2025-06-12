@@ -14,6 +14,9 @@ import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
 import TransactionStatus from "./transaction-status";
 import { parseEther } from "viem";
 import { useKescTransactions } from "@/hooks/use-kesc-transactions";
+import { useTransferStore } from "@/store/transfer";
+import { useQuoteStore } from "@/store/quote";
+import { useKescBalance } from "@/hooks/use-kesc-balance";
 
 interface SendActionSheetProps {
   isOpen: boolean;
@@ -31,6 +34,11 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   const { address } = useAccount();
   const { refresh: refreshTransactions } = useKescTransactions();
   const publicClient = usePublicClient();
+  const setTransferData = useTransferStore((state) => state.setTransferData);
+  const { clearQuoteData } = useQuoteStore();
+
+  const { refetch } = useKescBalance();
+  const { refresh } = useKescTransactions();
 
   // Check if sender is blacklisted
   const { data: isBlacklisted } = useReadContract({
@@ -157,12 +165,6 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         throw new Error("Insufficient balance");
       }
 
-      console.log("Sending transaction:", {
-        to: recipientAddress,
-        amount: amountInWei.toString(),
-        from: address,
-      });
-
       // Send the transaction
       writeContract({
         abi: KESC_ABI,
@@ -171,7 +173,6 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         args: [recipientAddress as `0x${string}`, amountInWei],
       });
     } catch (err) {
-      console.error("Transaction error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
       setTransactionState("cancelled");
     }
@@ -184,6 +185,13 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     setRecipientAddress("");
     setError(null);
     onClose();
+
+    clearQuoteData();
+    setTransferData(null);
+
+    // Refetch all wallet balances and transactions
+    refetch();
+    refresh();
   };
 
   const handleTryAgain = () => {

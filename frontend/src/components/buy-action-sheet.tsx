@@ -8,7 +8,7 @@ import { createTransferIn } from "../../actions/transfer";
 import { getQuoteIn } from "../../actions/quote";
 import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
 import { countries, MOCK_USER_DETAILS } from "../../data";
-import { QuoteT, TransferInT } from "../../types";
+import { QuoteT, TransferT } from "../../types";
 import OrderSummaryCard from "./order-summary-card";
 import TransactionStatus from "./transaction-status";
 import ActionSheet from "./ui/action-sheet";
@@ -94,7 +94,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
       // Store the quote in global state
       setQuoteData(quote);
 
-      const transferInPayload: TransferInT = {
+      const transferInPayload: TransferT = {
         phone: `+${data.phone}`,
         operator: OPERATOR!,
         quoteId: quote.quote.quoteId,

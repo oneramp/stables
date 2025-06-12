@@ -26,7 +26,7 @@ export type UserDetailsT = {
   additionalIdNumber: string;
 };
 
-export type TransferInT = {
+export type TransferT = {
   phone: string;
   operator: string;
   quoteId: string;
@@ -77,4 +77,16 @@ export type QuoteResponseT = {
       settlementTimeUpperBound: string;
     };
   };
+};
+
+export enum TransferStatus {
+  TransferStarted = "TransferStarted",
+  TransferComplete = "TransferComplete",
+  TransferFailed = "TransferFailed",
+}
+
+export type TransferOutResponseT = {
+  transferId: string;
+  transferStatus: TransferStatus;
+  transferAddress: string;
 };

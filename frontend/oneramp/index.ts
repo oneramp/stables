@@ -1,7 +1,7 @@
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
-import { QuoteT, TransferInT } from "../types";
+import { QuoteT, TransferT } from "../types";
 
 const ONERAMP_API_KEY = process.env.ONERAMP_API_KEY;
 const ONERAMP_API_URL = process.env.ONERAMP_URL;
@@ -25,17 +25,67 @@ class OneRamp {
 
   private async makeRequest(
     endpoint: string,
-    payload: QuoteT | TransferInT,
+    payload: QuoteT | TransferT,
     isTransferIn: boolean = false
   ) {
     try {
+      const headers = this.getHeaders(isTransferIn);
+      console.log("Request Headers:", headers);
+      console.log("Request URL:", `${ONERAMP_API_URL}${endpoint}`);
+
       const response = await axios.post(
         `${ONERAMP_API_URL}${endpoint}`,
         payload,
         {
-          headers: this.getHeaders(isTransferIn),
+          headers: headers,
         }
       );
+
+      console.log("====================================");
+      console.log("response", response.data);
+      console.log("====================================");
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // Handle API-specific errors
+        if (error.response) {
+          // Log detailed error information
+          console.error("API Error Details:", {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+            headers: error.response.headers,
+          });
+
+          const data = error.response.data;
+          const message =
+            data.message || data.error || "An error occurred with the API";
+          throw new Error(`OneRamp API Error: ${message}`);
+        } else if (error.request) {
+          console.error(
+            "Request made but no response received:",
+            error.request
+          );
+          throw new Error(
+            "Could not reach OneRamp API. Please check your connection."
+          );
+        } else {
+          console.error("Error setting up request:", error.message);
+          throw new Error(`Error setting up request: ${error.message}`);
+        }
+      }
+      // Handle other errors
+      console.error("Unexpected error:", error);
+      throw new Error("An unexpected error occurred");
+    }
+  }
+
+  async makeGetRequest(endpoint: string) {
+    try {
+      const response = await axios.get(`${ONERAMP_API_URL}${endpoint}`, {
+        headers: this.getHeaders(),
+      });
 
       return response.data;
     } catch (error) {
@@ -99,8 +149,12 @@ class OneRamp {
     return this.makeRequest("/quote-out", payload);
   }
 
-  async createTransferIn(payload: TransferInT) {
+  async createTransferIn(payload: TransferT) {
     return this.makeRequest("/kesc/transfer-in", payload, true);
+  }
+
+  async createTransferOut(payload: TransferT) {
+    return this.makeRequest("/kesc/transfer-out", payload, true);
   }
 }
 
