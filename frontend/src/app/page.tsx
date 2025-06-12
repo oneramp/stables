@@ -20,7 +20,7 @@ export default function Home() {
       <BalancesCard />
 
       {/* Recent Transactions */}
-      <div className="mt-8 mb-8">
+      <div className="">
         <RecentTransactions />
       </div>
 

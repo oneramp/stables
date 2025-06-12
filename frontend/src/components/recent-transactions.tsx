@@ -1,13 +1,20 @@
 "use client";
 
 import React from "react";
-import { ArrowDownLeft, ArrowUpRight, Send, ReceiptIcon } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Send,
+  ReceiptIcon,
+  ArrowRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useKescTransactions,
   type Transaction,
 } from "@/hooks/use-kesc-transactions";
 import { useAccount } from "wagmi";
+import { Button } from "./ui/button";
 
 interface RecentTransactionsProps {
   transactions?: Transaction[];
@@ -111,14 +118,22 @@ const RecentTransactions = ({
 
   return (
     <div className="w-full">
-      <div className="flex px-8">
-        <h2 className="mb-4 text-base font-semibold">Recent Transactions</h2>
+      <div className="flex flex-row justify-between items-center w-full">
+        <h2 className="pl-8 text-base font-semibold">Recent Transactions</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex flex-row gap-2 items-center text-sm text-green-500 bg-transparent border-none"
+        >
+          View all
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
-      <div className="">
-        {transactions.slice(0, 3).map((transaction, index) => (
+      <div className="bg-white">
+        {transactions.slice(0, 4).map((transaction, index) => (
           <div
             key={`${transaction.type}-${transaction.id}-${index}`}
-            className="flex items-center justify-between p-4 bg-transparent border-b-[1px] border-gray-200 rounded-xl"
+            className="flex items-center justify-between p-4 bg-transparent border-b-[1px] border-gray-200 "
           >
             {/* Left side - Icon and type */}
             <div className="flex items-center space-x-3">
