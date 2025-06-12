@@ -90,7 +90,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
             <Label
-              className="font-light text-sm text-muted-foreground"
+              className="text-sm font-light text-muted-foreground"
               htmlFor="amount"
             >
               Depositing
@@ -108,7 +108,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
           {/* Phone Number Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
             <Label
-              className="font-light text-sm text-muted-foreground"
+              className="text-sm font-light text-muted-foreground"
               htmlFor="phone"
             >
               Phone Number
@@ -123,7 +123,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
             />
           </div>
 
-          <div className="flex w-full items-center justify-center">
+          <div className="flex justify-center items-center w-full">
             <BsChevronDoubleDown />
           </div>
 
@@ -134,7 +134,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
         {/* Submit Button */}
         <div className="pt-6">
           <Button
-            className="w-full bg-black text-white rounded-full py-6 text-base hover:bg-black/90"
+            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
             onClick={handleSubmit}
           >
             Initiate Deposit

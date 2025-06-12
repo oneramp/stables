@@ -1,55 +1,123 @@
-import React from "react";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+"use client";
 
-interface Transaction {
-  id: string;
-  type: "deposit" | "sell";
-  amount: string;
-  date: string;
-  status: "success" | "pending" | "failed";
-}
+import React from "react";
+import { ArrowDownLeft, ArrowUpRight, Send, ReceiptIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  useKescTransactions,
+  type Transaction,
+} from "@/hooks/use-kesc-transactions";
+import { useAccount } from "wagmi";
 
 interface RecentTransactionsProps {
   transactions?: Transaction[];
 }
 
-const SAMPLE_TRANSACTIONS: Transaction[] = [
-  {
-    id: "1234",
-    type: "deposit",
-    amount: "25,000",
-    date: "Today, 2:30 PM",
-    status: "success",
-  },
-  {
-    id: "1235",
-    type: "sell",
-    amount: "15,000",
-    date: "Yesterday, 4:15 PM",
-    status: "success",
-  },
-  {
-    id: "1236",
-    type: "deposit",
-    amount: "5,000",
-    date: "Mar 15, 4:30 PM",
-    status: "pending",
-  },
-];
-
 const RecentTransactions = ({
-  transactions = SAMPLE_TRANSACTIONS,
+  transactions: propTransactions,
 }: RecentTransactionsProps) => {
+  const { transactions: hookTransactions } = useKescTransactions();
+  const { isConnected } = useAccount();
+
+  // Use provided transactions or hook transactions
+  const transactions = propTransactions || hookTransactions;
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    // If less than a minute ago
+    if (diffInSeconds < 60) {
+      return "Just now";
+    }
+    // If less than an hour ago
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
+    }
+    // If less than a day ago
+    if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+    }
+    // If less than a week ago
+    if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} ${days === 1 ? "day" : "days"} ago`;
+    }
+    // Otherwise return the date in a nice format
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+    });
+  };
+
+  if (!isConnected) {
+    return (
+      <div className="py-8 w-full text-center text-gray-500">
+        Connect your wallet to see your transactions
+      </div>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <div className="py-8 w-full text-center text-gray-500">
+        No transactions found
+      </div>
+    );
+  }
+
+  const getTransactionIcon = (type: Transaction["type"]) => {
+    switch (type) {
+      case "deposit":
+        return <ArrowDownLeft className="w-5 h-5 text-green-600" />;
+      case "sell":
+        return <ArrowUpRight className="w-5 h-5 text-orange-600" />;
+      case "send":
+        return <Send className="w-5 h-5 text-red-600" />;
+      case "receive":
+        return <ReceiptIcon className="w-5 h-5 text-blue-600" />;
+    }
+  };
+
+  const getTransactionColor = (type: Transaction["type"]) => {
+    switch (type) {
+      case "deposit":
+        return "bg-green-100";
+      case "sell":
+        return "bg-orange-100";
+      case "send":
+        return "bg-red-100";
+      case "receive":
+        return "bg-blue-100";
+    }
+  };
+
+  const getTransactionLabel = (type: Transaction["type"]) => {
+    switch (type) {
+      case "deposit":
+        return "Deposit";
+      case "sell":
+        return "Sale";
+      case "send":
+        return "Sent";
+      case "receive":
+        return "Received";
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex px-8">
-        <h2 className="text-base font-semibold mb-4">Recent Transactions</h2>
+        <h2 className="mb-4 text-base font-semibold">Recent Transactions</h2>
       </div>
       <div className="">
-        {transactions.map((transaction) => (
+        {transactions.slice(0, 3).map((transaction, index) => (
           <div
-            key={transaction.id}
+            key={`${transaction.type}-${transaction.id}-${index}`}
             className="flex items-center justify-between p-4 bg-transparent border-b-[1px] border-gray-200 rounded-xl"
           >
             {/* Left side - Icon and type */}
@@ -57,22 +125,21 @@ const RecentTransactions = ({
               <div
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center",
-                  transaction.type === "deposit"
-                    ? "bg-green-100"
-                    : "bg-orange-100"
+                  getTransactionColor(transaction.type)
                 )}
               >
-                {transaction.type === "deposit" ? (
-                  <ArrowDownLeft className="w-5 h-5 text-green-600" />
-                ) : (
-                  <ArrowUpRight className="w-5 h-5 text-orange-600" />
-                )}
+                {getTransactionIcon(transaction.type)}
               </div>
               <div>
                 <p className="font-medium">
-                  {transaction.type === "deposit" ? "Deposit" : "Sale"}
+                  {getTransactionLabel(transaction.type)}
                 </p>
-                <p className="text-sm text-gray-500">{transaction.date}</p>
+                <p className="font-mono text-xs text-gray-400">
+                  {transaction.id.slice(0, 6)}...{transaction.id.slice(-4)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatDate(transaction.date)}
+                </p>
               </div>
             </div>
 
