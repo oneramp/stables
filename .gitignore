@@ -12,3 +12,18 @@ docs/
 
 # Dotenv file
 .env
+frontend/.env
+frontend/node_modules
+frontend/dist
+frontend/build
+
+node_modules/
+package-lock.json
+package.json
+
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
