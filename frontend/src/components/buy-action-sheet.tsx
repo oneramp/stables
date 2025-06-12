@@ -1,11 +1,21 @@
-import React, { useState } from "react";
-import ActionSheet from "./ui/action-sheet";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
+import { quoteSchema, type QuoteFormData } from "@/lib/validations/quote";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAppKitAccount } from "@reown/appkit/react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { BsChevronDoubleDown } from "react-icons/bs";
+import { createTransferIn } from "../../actions/transfer";
+import { getQuoteIn } from "../../actions/quote";
+import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
+import { countries, MOCK_USER_DETAILS } from "../../data";
+import { QuoteT, TransferInT } from "../../types";
 import OrderSummaryCard from "./order-summary-card";
 import TransactionStatus from "./transaction-status";
+import ActionSheet from "./ui/action-sheet";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { useTransferStore } from "@/store/transfer";
 
 interface BuyActionSheetProps {
   isOpen: boolean;
@@ -17,29 +27,120 @@ type TransactionState = "input" | "processing" | "success" | "cancelled";
 const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
-  const [amount, setAmount] = useState("");
-  const [phone, setPhone] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [quoteData, setQuoteData] = useState<any>(null);
+  const setTransferData = useTransferStore((state) => state.setTransferData);
 
-  const handleSubmit = () => {
-    setTransactionState("processing");
-    // Simulate transaction process
-    setTimeout(() => {
-      // Randomly succeed or fail for demo purposes
-      setTransactionState(Math.random() > 0.5 ? "success" : "cancelled");
-    }, 3000);
+  const { address } = useAppKitAccount();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setError: setFormError,
+  } = useForm<QuoteFormData>({
+    resolver: zodResolver(quoteSchema),
+  });
+
+  const onSubmit = async (data: QuoteFormData) => {
+    try {
+      // Clear any previous errors
+      setError(null);
+      setQuoteData(null);
+      setTransferData(null);
+
+      if (!address) {
+        setError("Please connect your wallet to continue");
+        return;
+      }
+
+      if (!COUNTRY || !CHAIN) {
+        setError("Application configuration error. Please contact support.");
+        return;
+      }
+
+      setTransactionState("processing");
+
+      const country = countries[COUNTRY];
+      if (!country) {
+        setError("Invalid country configuration");
+        setTransactionState("cancelled");
+        return;
+      }
+
+      const payload: QuoteT = {
+        fiatType: country.currency,
+        cryptoType: "USDC",
+        network: CHAIN,
+        fiatAmount: data.amount,
+        country: country.symbol,
+        address: address,
+      };
+
+      // Call the OneRamp API to get a quote
+      const quote = await getQuoteIn(payload);
+
+      if (!quote) {
+        throw new Error("No response received from API");
+      }
+
+      const transferInPayload: TransferInT = {
+        phone: `+${data.phone}`,
+        operator: OPERATOR!,
+        quoteId: quote.quote.quoteId,
+        userDetails: MOCK_USER_DETAILS,
+      };
+
+      const transferInResponse = await createTransferIn(transferInPayload);
+
+      // Store the transfer response in global state
+      setTransferData(transferInResponse);
+
+      setQuoteData(quote);
+      setTransactionState("success");
+    } catch (err) {
+      // Handle specific error cases
+      if (err instanceof Error) {
+        const errorMessage = err.message;
+
+        if (errorMessage.includes("API key")) {
+          setError("Service configuration error. Please contact support.");
+        } else if (errorMessage.includes("connection")) {
+          setError(
+            "Network error. Please check your connection and try again."
+          );
+        } else if (errorMessage.includes("Invalid amount")) {
+          setFormError("amount", {
+            type: "manual",
+            message: "Please enter a valid amount",
+          });
+        } else {
+          // Show the actual error message from the server
+          setError(errorMessage.replace("OneRamp API Error: ", ""));
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+
+      setTransactionState("cancelled");
+    }
   };
 
   const handleDone = () => {
-    // Reset form and close
     setTransactionState("input");
-    setAmount("");
-    setPhone("");
+    setError(null);
+    setQuoteData(null);
+    setTransferData(null);
+    reset();
     onClose();
   };
 
   const handleTryAgain = () => {
-    // Reset to input state
     setTransactionState("input");
+    setError(null);
+    setQuoteData(null);
+    setTransferData(null);
   };
 
   const getTitle = () => {
@@ -59,33 +160,30 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
     return (
       <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
         <TransactionStatus
-          status={
-            transactionState === "processing"
-              ? "processing"
-              : transactionState === "success"
-              ? "success"
-              : "cancelled"
-          }
-          amount={amount || "5.00"}
-          reference="1749664700111c40"
+          status={transactionState}
+          amount={quoteData?.amount || "0.00"}
+          reference={quoteData?.reference || "Pending..."}
           agent={{
-            name: "Geofrey Lamech K.",
-            initials: "GL",
+            name: "OneRamp",
+            initials: "OR",
           }}
-          date="Jun 11, 2025"
-          time="8:58PM"
-          fee="0.00"
+          date={new Date().toLocaleDateString()}
+          time={new Date().toLocaleTimeString()}
+          fee={quoteData?.fee || "0.00"}
           type="deposit"
           onDone={handleDone}
           onTryAgain={handleTryAgain}
         />
+        {error && (
+          <div className="mt-4 text-sm text-center text-red-500">{error}</div>
+        )}
       </ActionSheet>
     );
   }
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <div className="flex flex-col h-full">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
@@ -97,12 +195,14 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
             </Label>
             <Input
               id="amount"
-              type="number"
+              type="text"
               placeholder="12,3455"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              {...register("amount")}
               className="px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
             />
+            {errors.amount && (
+              <p className="text-sm text-red-500">{errors.amount.message}</p>
+            )}
           </div>
 
           {/* Phone Number Input */}
@@ -117,10 +217,12 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
               id="phone"
               type="tel"
               placeholder="077XXXXXXX"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              {...register("phone")}
               className="px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
             />
+            {errors.phone && (
+              <p className="text-sm text-red-500">{errors.phone.message}</p>
+            )}
           </div>
 
           <div className="flex justify-center items-center w-full">
@@ -134,13 +236,14 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
         {/* Submit Button */}
         <div className="pt-6">
           <Button
+            type="submit"
             className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
-            onClick={handleSubmit}
+            disabled={isSubmitting}
           >
-            Initiate Deposit
+            {isSubmitting ? "Processing..." : "Initiate Deposit"}
           </Button>
         </div>
-      </div>
+      </form>
     </ActionSheet>
   );
 };

@@ -84,17 +84,6 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
 
   // Watch for status changes
   useEffect(() => {
-    console.log("Transaction state update:", {
-      isPending,
-      isConfirming,
-      isConfirmed,
-      isError,
-      writeError,
-      isReceiptError,
-      receiptError,
-      hash,
-    });
-
     if (isPending || isConfirming) {
       setTransactionState("processing");
     } else if (isConfirmed) {
@@ -226,7 +215,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
             hash ? `Tx: ${hash.slice(0, 10)}...` : "Transaction pending"
           }
           agent={{
-            name: recipientAddress,
+            name: recipientAddress.slice(0, 5),
             initials: recipientAddress.slice(0, 2),
           }}
           date={new Date().toLocaleDateString()}

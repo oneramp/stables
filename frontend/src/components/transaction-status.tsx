@@ -2,6 +2,7 @@ import React from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { useTransferStore } from "@/store/transfer";
 
 type TransactionStatusType =
   | "processing"
@@ -39,6 +40,8 @@ const TransactionStatus = ({
   onDone,
   onTryAgain,
 }: TransactionStatusProps) => {
+  const { transferData } = useTransferStore();
+
   const statusConfig = {
     processing: {
       icon: <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />,
@@ -82,6 +85,10 @@ const TransactionStatus = ({
 
   const config = statusConfig[status];
 
+  console.log("====================================");
+  console.log("transferData", transferData);
+  console.log("====================================");
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1">
@@ -90,20 +97,20 @@ const TransactionStatus = ({
           <div
             className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 ${config.bgColor}`}
           >
-            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-white">
+            <div className="flex justify-center items-center w-16 h-16 bg-white rounded-full">
               {config.icon}
             </div>
           </div>
 
           {/* Transaction Info */}
-          <div className="text-center mb-8">
-            <p className="text-gray-600 mb-2">
+          <div className="mb-8 text-center">
+            <p className="mb-2 text-gray-600">
               {type === "deposit"
                 ? "Deposited via OneRamp"
                 : "Sold via OneRamp"}
             </p>
             <div className="flex flex-col items-center">
-              <h1 className="text-4xl font-semibold mb-2">
+              <h1 className="mb-2 text-4xl font-semibold">
                 KES {amount.toLocaleString()}
               </h1>
               <span
@@ -133,7 +140,7 @@ const TransactionStatus = ({
       {status !== "processing" && status !== "pending" && (
         <div className="pt-6">
           <Button
-            className="w-full bg-black text-white rounded-full py-6 text-base hover:bg-black/90"
+            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
             onClick={status === "success" ? onDone : onTryAgain}
           >
             {status === "success" ? "Done" : "Try Again"}
