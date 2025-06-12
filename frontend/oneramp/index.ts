@@ -100,7 +100,7 @@ class OneRamp {
   }
 
   async createTransferIn(payload: TransferInT) {
-    return this.makeRequest("/transfer-in", payload, true);
+    return this.makeRequest("/kesc/transfer-in", payload, true);
   }
 }
 

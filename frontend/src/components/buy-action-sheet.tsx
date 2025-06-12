@@ -16,6 +16,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useTransferStore } from "@/store/transfer";
+import { useQuoteStore } from "@/store/quote";
+import { useKescBalance } from "@/hooks/use-kesc-balance";
+import { useKescTransactions } from "@/hooks/use-kesc-transactions";
 
 interface BuyActionSheetProps {
   isOpen: boolean;
@@ -28,8 +31,11 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
-  const [quoteData, setQuoteData] = useState<any>(null);
   const setTransferData = useTransferStore((state) => state.setTransferData);
+  const { quoteData, setQuoteData, clearQuoteData } = useQuoteStore();
+
+  const { refetch } = useKescBalance();
+  const { refresh } = useKescTransactions();
 
   const { address } = useAppKitAccount();
 
@@ -45,9 +51,9 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
 
   const onSubmit = async (data: QuoteFormData) => {
     try {
-      // Clear any previous errors
+      // Clear any previous errors and data
       setError(null);
-      setQuoteData(null);
+      clearQuoteData();
       setTransferData(null);
 
       if (!address) {
@@ -85,6 +91,9 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
         throw new Error("No response received from API");
       }
 
+      // Store the quote in global state
+      setQuoteData(quote);
+
       const transferInPayload: TransferInT = {
         phone: `+${data.phone}`,
         operator: OPERATOR!,
@@ -97,7 +106,6 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
       // Store the transfer response in global state
       setTransferData(transferInResponse);
 
-      setQuoteData(quote);
       setTransactionState("success");
     } catch (err) {
       // Handle specific error cases
@@ -130,16 +138,20 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   const handleDone = () => {
     setTransactionState("input");
     setError(null);
-    setQuoteData(null);
+    clearQuoteData();
     setTransferData(null);
     reset();
     onClose();
+
+    // Refetch all wallet balances and transactions
+    refetch();
+    refresh();
   };
 
   const handleTryAgain = () => {
     setTransactionState("input");
     setError(null);
-    setQuoteData(null);
+    clearQuoteData();
     setTransferData(null);
   };
 
@@ -161,15 +173,15 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
       <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
         <TransactionStatus
           status={transactionState}
-          amount={quoteData?.amount || "0.00"}
-          reference={quoteData?.reference || "Pending..."}
+          amount={quoteData?.quote?.amountPaid || "0.00"}
+          reference={quoteData?.quote?.quoteId || "Pending..."}
           agent={{
             name: "OneRamp",
             initials: "OR",
           }}
           date={new Date().toLocaleDateString()}
           time={new Date().toLocaleTimeString()}
-          fee={quoteData?.fee || "0.00"}
+          fee={quoteData?.quote?.fee || "0.00"}
           type="deposit"
           onDone={handleDone}
           onTryAgain={handleTryAgain}

@@ -21,7 +21,6 @@ export function useKescBalance() {
 
   // Memoize the refetch callback
   const handleBalanceChange = useCallback(() => {
-    console.log("Refreshing balance...");
     refetch();
   }, [refetch]);
 
@@ -39,7 +38,6 @@ export function useKescBalance() {
           const { from, to } = args;
           // Refetch if user is sender or receiver
           if (from === address || to === address) {
-            console.log("Transfer event detected for user, refreshing balance");
             handleBalanceChange();
           }
         } catch (error) {
@@ -59,7 +57,6 @@ export function useKescBalance() {
         try {
           const { args } = log;
           if (!args || args.to !== address) continue;
-          console.log("Mint event detected for user, refreshing balance");
           handleBalanceChange();
         } catch (error) {
           console.error("Error processing mint event:", error);
@@ -78,7 +75,6 @@ export function useKescBalance() {
         try {
           const { args } = log;
           if (!args || args.from !== address) continue;
-          console.log("Burn event detected for user, refreshing balance");
           handleBalanceChange();
         } catch (error) {
           console.error("Error processing burn event:", error);

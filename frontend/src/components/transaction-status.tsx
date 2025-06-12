@@ -85,9 +85,7 @@ const TransactionStatus = ({
 
   const config = statusConfig[status];
 
-  console.log("====================================");
-  console.log("transferData", transferData);
-  console.log("====================================");
+  const transferId = transferData?.transferId || "Pending...";
 
   return (
     <div className="flex flex-col h-full">
@@ -126,11 +124,13 @@ const TransactionStatus = ({
           {/* Transaction Details */}
           <div className="w-full space-y-6 bg-neutral-100 border-[1px] border-gray-200 rounded-xl p-4">
             <div className="">
-              <DetailItem label="Reference" value={reference} />
+              <DetailItem
+                label="Reference"
+                value={`${transferId.slice(0, 4)}...${transferId.slice(-4)}`}
+              />
               <DetailItem label="Date" value={date} />
               <DetailItem label="Time" value={time} />
-              <DetailItem label="Fee" value={`KES ${fee}`} />
-              <DetailItem label="Agent" value={agent.name} />
+              <DetailItem label="Via" value={agent.name} />
             </div>
           </div>
         </div>

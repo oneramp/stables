@@ -47,3 +47,34 @@ export type TransferInResponseT = {
   transferStatus: string;
   userActionDetails: UserActionDetailsT;
 };
+
+export type QuoteResponseT = {
+  quote: {
+    fiatType: string;
+    cryptoType: string;
+    fiatAmount: string;
+    cryptoAmount: string;
+    country: string;
+    amountPaid: string;
+    address: string;
+    fee: string;
+    guaranteedUntil: string;
+    transferType: string;
+    quoteId: string;
+    network: string;
+    used: boolean;
+    requestType: string;
+    id: string;
+  };
+  kyc: {
+    kycRequired: boolean;
+    kycSchemas: any[];
+  };
+  fiatAccount: {
+    MobileMoney: {
+      fiatAccountSchemas: any[];
+      settlementTimeLowerBound: string;
+      settlementTimeUpperBound: string;
+    };
+  };
+};
