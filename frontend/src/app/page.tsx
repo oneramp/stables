@@ -7,12 +7,10 @@ import { Gift, Navigation } from "lucide-react";
 import PageLayoutContainer from "@/components/page-layout-container";
 import RecentTransactions from "@/components/recent-transactions";
 import SendActionSheet from "@/components/send-action-sheet";
-import ReceiveActionSheet from "@/components/receive-action-sheet";
 import { useState } from "react";
 
 export default function Home() {
   const [isSendOpen, setIsSendOpen] = useState(false);
-  const [isReceiveOpen, setIsReceiveOpen] = useState(false);
 
   return (
     <PageLayoutContainer>
@@ -27,21 +25,21 @@ export default function Home() {
       </div>
 
       {/* Bottom Tabs */}
-      <div className="w-full flex flex-row items-center justify-between gap-4 sticky bottom-0 z-10">
+      <div className="flex sticky bottom-0 z-10 flex-row gap-4 justify-between items-center w-full">
         <Button
-          className="border-none w-full bg-black flex px-8 flex-row items-center justify-center rounded-full py-6 text-base"
+          className="flex flex-row justify-center items-center px-8 py-6 w-full text-base bg-black rounded-full border-none"
           onClick={() => setIsSendOpen(true)}
         >
           Send
-          <Navigation className="size-8 ml-2" />
+          <Navigation className="ml-2 size-8" />
         </Button>
 
         <Button
-          className="border-none w-full bg-black flex px-8 flex-row items-center justify-center rounded-full py-6 text-base"
-          onClick={() => setIsReceiveOpen(true)}
+          className="flex flex-row justify-center items-center px-8 py-6 w-full text-base bg-black rounded-full border-none"
+          // onClick={() => setIsReceiveOpen(true)}
         >
-          Receive
-          <Gift className="size-8 ml-2" />
+          Pay bill
+          <Gift className="ml-2 size-8" />
         </Button>
       </div>
 
@@ -49,10 +47,6 @@ export default function Home() {
       <SendActionSheet
         isOpen={isSendOpen}
         onClose={() => setIsSendOpen(false)}
-      />
-      <ReceiveActionSheet
-        isOpen={isReceiveOpen}
-        onClose={() => setIsReceiveOpen(false)}
       />
     </PageLayoutContainer>
   );

@@ -6,12 +6,14 @@ import { Button } from "./ui/button";
 import { useState } from "react";
 import BuyActionSheet from "./buy-action-sheet";
 import SellActionSheet from "./sell-action-sheet";
+import ReceiveActionSheet from "./receive-action-sheet";
 import { useKescBalance } from "@/hooks/use-kesc-balance";
 import { useAccount } from "wagmi";
 
 const BalancesCard = () => {
   const [isBuyOpen, setIsBuyOpen] = useState(false);
   const [isSellOpen, setIsSellOpen] = useState(false);
+  const [isReceiveOpen, setIsReceiveOpen] = useState(false);
   const { balance, isLoading } = useKescBalance();
   const { isConnected } = useAccount();
 
@@ -89,7 +91,10 @@ const BalancesCard = () => {
           <span className="text-sm text-gray-600">Sell</span>
         </button>
 
-        <button className="flex flex-col gap-2 items-center bg-transparent border-none hover:bg-transparent">
+        <button
+          className="flex flex-col gap-2 items-center bg-transparent border-none hover:bg-transparent"
+          onClick={() => setIsReceiveOpen(true)}
+        >
           <div className="w-12 h-12 rounded-full bg-[#E97451] flex items-center justify-center">
             <ArrowDownToLine className="w-6 h-6 text-white" />
           </div>
@@ -102,6 +107,10 @@ const BalancesCard = () => {
       <SellActionSheet
         isOpen={isSellOpen}
         onClose={() => setIsSellOpen(false)}
+      />
+      <ReceiveActionSheet
+        isOpen={isReceiveOpen}
+        onClose={() => setIsReceiveOpen(false)}
       />
     </div>
   );
