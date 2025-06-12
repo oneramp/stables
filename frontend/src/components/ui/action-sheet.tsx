@@ -19,23 +19,23 @@ const ActionSheet = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
-      <div className="absolute inset-0 md:w-[30%] md:inset-auto md:h-[90%] md:rounded-[32px] mx-auto bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
+    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black/20">
+      <div className="absolute inset-0 md:w-[26%] md:inset-auto md:h-[90%] md:rounded-[26px] mx-auto bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex justify-between items-center px-6 border-b border-gray-100">
           <h2 className="text-lg font-semibold">{title}</h2>
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full"
+            className="rounded-full border-none"
             onClick={onClose}
           >
-            <X className="h-5 w-5" />
+            <X className="size-12" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto px-6 py-4">{children}</div>
+        <div className="overflow-auto flex-1">{children}</div>
       </div>
     </div>
   );

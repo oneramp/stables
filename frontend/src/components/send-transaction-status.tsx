@@ -51,7 +51,7 @@ const SendTransactionStatus = ({
   const { width, height } = useWindowSize();
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col px-4 h-full">
       <div className="flex-1">
         <div className="flex flex-col items-center h-full">
           {/* Status Icon */}
@@ -102,7 +102,7 @@ const SendTransactionStatus = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="pt-6">
+      <div className="flex flex-col justify-center items-center pt-6 w-full">
         <Button
           className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
           onClick={status === "success" ? onDone : onTryAgain}

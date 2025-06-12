@@ -235,7 +235,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col px-4 h-full">
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
@@ -277,9 +277,9 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
         </div>
 
         {/* Submit Button */}
-        <div className="pt-6">
+        <div className="flex justify-center items-center pt-6 w-full">
           <Button
-            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
             onClick={handleSubmit}
             disabled={!amount || !recipientAddress || isPending}
           >

@@ -1,14 +1,13 @@
-import React, { useEffect } from "react";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useWindowSize } from "react-use";
-import { Button } from "./ui/button";
-import { useTransferStore } from "@/store/transfer";
 import { useQuoteStore } from "@/store/quote";
+import { useTransferStore } from "@/store/transfer";
 import { useQuery } from "@tanstack/react-query";
-import { getTransfer } from "../../actions/transfer";
-import { TransferStatus, TransactionStatusType } from "../../types";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import React, { useEffect } from "react";
 import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
+import { getTransfer } from "../../actions/transfer";
+import { TransactionStatusType, TransferStatus } from "../../types";
+import { Button } from "./ui/button";
 
 import {
   Dialog,
@@ -30,7 +29,7 @@ interface TransactionStatusProps {
   date: string;
   time: string;
   fee: string;
-  type: "deposit" | "sell";
+  type: "deposit" | "sell" | "bill";
   onDone: () => void;
   onTryAgain: () => void;
 }
@@ -163,7 +162,7 @@ const TransactionStatus = ({
 
       {status === "success" && <Confetti width={width} height={height} />}
 
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col px-4 h-full">
         <div className="flex-1">
           <div className="flex flex-col items-center h-full">
             {/* Status Icon */}

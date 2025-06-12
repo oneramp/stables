@@ -104,3 +104,21 @@ export type TransactionStatusType =
   | "idle"
   | "pending"
   | "error";
+
+export type PayBillQuoteT = {
+  fiatType: string;
+  cryptoType: string;
+  region: string;
+  fiatAmount: string;
+  network: string;
+  country: string;
+  address: string;
+  rawAmount: string;
+};
+
+export type PayBillTransferT = {
+  quoteId: string;
+  accountName: string;
+  accountNumber: string;
+  businessNumber: string;
+};

@@ -1,64 +1,63 @@
 "use client";
 
-import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import { useKescBalance } from "@/hooks/use-kesc-balance";
-import { useKescTransactions } from "@/hooks/use-kesc-transactions";
-import { quoteSchema, type QuoteFormData } from "@/lib/validations/quote";
-import { useQuoteStore } from "@/store/quote";
-import { useTransferStore } from "@/store/transfer";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAppKitAccount } from "@reown/appkit/react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { BsChevronDoubleDown } from "react-icons/bs";
-import { parseEther } from "viem";
-import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import { getQuoteOut } from "../../actions/quote";
-import {
-  createTransferOut,
-  submitOnChainTransactionHash,
-} from "../../actions/transfer";
-import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
-import { countries, MOCK_USER_DETAILS } from "../../data";
-import { QuoteT, TransferT } from "../../types";
-import OrderSummaryCard from "./order-summary-card";
-import TransactionStatus from "./transaction-status";
+import { useState, useEffect } from "react";
 import ActionSheet from "./ui/action-sheet";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { useAppKitAccount } from "@reown/appkit/react";
+import { useKescBalance } from "@/hooks/use-kesc-balance";
+import { useKescTransactions } from "@/hooks/use-kesc-transactions";
+import { getPayBillQuote } from "../../actions/quote";
+import {
+  createPayBillTransfer,
+  submitOnChainTransactionHash,
+} from "../../actions/transfer";
+import { CHAIN, COUNTRY } from "../../constants";
+import { countries } from "../../data";
+import { PayBillQuoteT, PayBillTransferT } from "../../types";
+import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
+import { parseEther } from "viem";
+import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import TransactionStatus from "./transaction-status";
+import { useTransferStore } from "@/store/transfer";
 
-interface SellActionSheetProps {
+interface PayBillActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
 
-const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
+// Define keypad letters - reused from ReceiveActionSheet
+const KEYPAD_LETTERS: { [key: string]: string } = {
+  "1": "",
+  "2": "ABC",
+  "3": "DEF",
+  "4": "GHI",
+  "5": "JKL",
+  "6": "MNO",
+  "7": "PQRS",
+  "8": "TUV",
+  "9": "WXYZ",
+  "0": "",
+};
+
+const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
+  const [businessNumber, setBusinessNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [amount, setAmount] = useState("");
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
+  const [quoteData, setQuoteData] = useState<any>(null);
 
-  // Use separate selectors for each value
-  const transferData = useTransferStore((state) => state.transferData);
   const setTransferData = useTransferStore((state) => state.setTransferData);
-  const { quoteData, setQuoteData, clearQuoteData } = useQuoteStore();
-
-  const { refetch } = useKescBalance();
-  const { refresh } = useKescTransactions();
+  const transferData = useTransferStore((state) => state.transferData);
 
   const { address } = useAppKitAccount();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-    setError: setFormError,
-  } = useForm<QuoteFormData>({
-    resolver: zodResolver(quoteSchema),
-  });
+  const { refetch } = useKescBalance();
+  const { refresh } = useKescTransactions();
 
   const { writeContract, data: hash } = useWriteContract();
 
@@ -67,11 +66,22 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
       hash,
     });
 
-  const onSubmit = async (data: QuoteFormData) => {
+  const handleAmountChange = (value: string) => {
+    // Only allow numbers and one decimal point
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (value === "" || regex.test(value)) {
+      // Check if the amount is within valid range
+      if (value === "" || parseFloat(value) <= 999999.99) {
+        setAmount(value);
+      }
+    }
+  };
+
+  const handlePayBill = async () => {
     try {
       // Clear any previous errors and data
       setError(null);
-      clearQuoteData();
+      setQuoteData(null);
       setTransferData(null);
 
       if (!address) {
@@ -93,45 +103,48 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
         return;
       }
 
-      const payload: QuoteT = {
+      // Get pay bill quote
+      const quotePayload: PayBillQuoteT = {
         fiatType: country.currency,
         cryptoType: "USDC",
+        region: country.symbol,
+        fiatAmount: amount,
         network: CHAIN,
-        fiatAmount: data.amount,
         country: country.symbol,
         address: address,
+        rawAmount: amount,
       };
 
-      // Call the OneRamp API to get a quote
-      const quote = await getQuoteOut(payload);
+      const quote = await getPayBillQuote(quotePayload);
 
       if (!quote) {
         throw new Error("No response received from API");
       }
 
-      // Store the quote in global state
+      // Store the quote data
       setQuoteData(quote);
 
-      const transferOutPayload: TransferT = {
-        phone: `+${data.phone}`,
-        operator: OPERATOR!,
+      // Create pay bill transfer
+      const transferPayload: PayBillTransferT = {
         quoteId: quote.quote.quoteId,
-        userDetails: MOCK_USER_DETAILS,
+        accountName: "OneRamp", // You might want to make this dynamic
+        accountNumber: accountNumber,
+        businessNumber: businessNumber,
       };
 
-      const transferOutResponse = await createTransferOut(transferOutPayload);
+      const transferResponse = await createPayBillTransfer(transferPayload);
 
-      if (!transferOutResponse) {
+      if (!transferResponse) {
         throw new Error("No response received from API");
       }
 
-      const { transferAddress } = transferOutResponse;
+      // Store the transfer response in the global store
+      setTransferData(transferResponse);
 
-      // Store the transfer response in global state
-      setTransferData(transferOutResponse);
+      const { transferAddress } = transferResponse;
 
       // Convert the amountPaid to Wei (assuming 18 decimals)
-      const amountInWei = parseEther(quote.quote.amountPaid);
+      const amountInWei = parseEther(quote.quote.fiatAmount);
 
       // Send the token transfer transaction
       writeContract({
@@ -141,7 +154,6 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
         args: [transferAddress as `0x${string}`, amountInWei],
       });
     } catch (err) {
-      // Handle specific error cases
       if (err instanceof Error) {
         const errorMessage = err.message;
 
@@ -151,11 +163,6 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
           setError(
             "Network error. Please check your connection and try again."
           );
-        } else if (errorMessage.includes("Invalid amount")) {
-          setFormError("amount", {
-            type: "manual",
-            message: "Please enter a valid amount",
-          });
         } else {
           // Show the actual error message from the server
           setError(errorMessage.replace("OneRamp API Error: ", ""));
@@ -177,6 +184,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
             txHash: hash,
             transferId: transferData.transferId,
           });
+          setTransactionState("success");
         } catch (error) {
           // If it's "already processing", that's fine - the transfer status will update
           if (
@@ -199,9 +207,11 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
   const handleDone = () => {
     setTransactionState("input");
     setError(null);
-    clearQuoteData();
+    setQuoteData(null);
     setTransferData(null);
-    reset();
+    setBusinessNumber("");
+    setAccountNumber("");
+    setAmount("");
     onClose();
 
     // Refetch all wallet balances and transactions
@@ -212,20 +222,20 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
   const handleTryAgain = () => {
     setTransactionState("input");
     setError(null);
-    clearQuoteData();
+    setQuoteData(null);
     setTransferData(null);
   };
 
   const getTitle = () => {
     switch (transactionState) {
       case "processing":
-        return "Processing Sale";
+        return "Processing Payment";
       case "success":
         return "Transaction Details";
       case "cancelled":
         return "Transaction Failed";
       default:
-        return "Sell KESC";
+        return "Pay Bill";
     }
   };
 
@@ -243,7 +253,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
           date={new Date().toLocaleDateString()}
           time={new Date().toLocaleTimeString()}
           fee={quoteData?.quote?.fee || "0.00"}
-          type="sell"
+          type="bill"
           onDone={handleDone}
           onTryAgain={handleTryAgain}
         />
@@ -256,72 +266,79 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col px-4 h-full"
-      >
-        <div className="flex-1 space-y-6">
+      <div className="flex flex-col px-4 h-full bg-white">
+        <div className="flex flex-col gap-6">
+          {/* Business Number Input */}
+          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
+            <Label
+              className="text-sm font-light text-muted-foreground"
+              htmlFor="business-number"
+            >
+              Business Number
+            </Label>
+            <Input
+              id="business-number"
+              type="text"
+              value={businessNumber}
+              onChange={(e) => setBusinessNumber(e.target.value)}
+              className="px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
+            />
+          </div>
+
+          {/* Account Number Input */}
+          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
+            <Label
+              className="text-sm font-light text-muted-foreground"
+              htmlFor="account-number"
+            >
+              Account Number
+            </Label>
+            <Input
+              id="account-number"
+              type="text"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              className="px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
+            />
+          </div>
+
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
             <Label
               className="text-sm font-light text-muted-foreground"
               htmlFor="amount"
             >
-              Selling
+              Amount (KESC)
             </Label>
             <Input
               id="amount"
               type="text"
-              placeholder="12,3455"
-              {...register("amount")}
-              className="px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
-            />
-            {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount.message}</p>
-            )}
-          </div>
-
-          {/* Phone Number Input */}
-          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
-            <Label
-              className="text-sm font-light text-muted-foreground"
-              htmlFor="phone"
-            >
-              Phone Number
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="077XXXXXXX"
-              {...register("phone")}
+              value={amount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="0.00"
               className="px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
             />
-            {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone.message}</p>
-            )}
           </div>
 
-          <div className="flex justify-center items-center w-full">
-            <BsChevronDoubleDown />
+          {/* Pay Button */}
+          <div className="flex justify-center items-center pt-6 w-full">
+            <Button
+              onClick={handlePayBill}
+              disabled={
+                !businessNumber ||
+                !accountNumber ||
+                !amount ||
+                parseFloat(amount) === 0
+              }
+              className="p-6 w-full text-base text-white rounded-full border-none hover:bg-primary/90"
+            >
+              Pay Bill
+            </Button>
           </div>
-
-          {/* Transaction Summary */}
-          <OrderSummaryCard />
         </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-center items-center pt-6 w-full">
-          <Button
-            type="submit"
-            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Processing..." : "Initiate Sale"}
-          </Button>
-        </div>
-      </form>
+      </div>
     </ActionSheet>
   );
 };
 
-export default SellActionSheet;
+export default PayBillActionSheet;

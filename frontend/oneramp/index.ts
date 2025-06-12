@@ -1,7 +1,13 @@
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
-import { QuoteT, SubmitOnChainTransactionHashT, TransferT } from "../types";
+import {
+  PayBillQuoteT,
+  PayBillTransferT,
+  QuoteT,
+  SubmitOnChainTransactionHashT,
+  TransferT,
+} from "../types";
 
 const ONERAMP_API_KEY = process.env.ONERAMP_API_KEY;
 const ONERAMP_API_URL = process.env.ONERAMP_URL;
@@ -25,14 +31,15 @@ class OneRamp {
 
   private async makeRequest(
     endpoint: string,
-    payload: QuoteT | TransferT | SubmitOnChainTransactionHashT,
+    payload:
+      | QuoteT
+      | TransferT
+      | SubmitOnChainTransactionHashT
+      | PayBillTransferT,
     isTransferIn: boolean = false
   ) {
     try {
       const headers = this.getHeaders(isTransferIn);
-      console.log("Request Headers:", headers);
-      console.log("Request URL:", `${ONERAMP_API_URL}${endpoint}`);
-
       const response = await axios.post(
         `${ONERAMP_API_URL}${endpoint}`,
         payload,
@@ -130,12 +137,20 @@ class OneRamp {
     return this.makeRequest("/quote-out", payload);
   }
 
+  async getPayBillQuote(payload: PayBillQuoteT) {
+    return this.makeRequest("/bill/quote", payload);
+  }
+
   async createTransferIn(payload: TransferT) {
     return this.makeRequest("/kesc/transfer-in", payload, true);
   }
 
   async createTransferOut(payload: TransferT) {
     return this.makeRequest("/kesc/transfer-out", payload, true);
+  }
+
+  async createPayBillTransfer(payload: PayBillTransferT) {
+    return this.makeRequest("/bill", payload, true);
   }
 
   async submitOnChainTransactionHash(payload: SubmitOnChainTransactionHashT) {

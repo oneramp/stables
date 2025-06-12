@@ -195,7 +195,10 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col px-4 h-full"
+      >
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
           <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
@@ -246,10 +249,10 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
         </div>
 
         {/* Submit Button */}
-        <div className="pt-6">
+        <div className="flex justify-center items-center pt-6 w-full">
           <Button
             type="submit"
-            className="py-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Processing..." : "Initiate Deposit"}

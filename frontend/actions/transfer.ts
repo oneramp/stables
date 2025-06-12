@@ -1,7 +1,11 @@
 "use server";
 
 import OneRamp from "../oneramp";
-import { SubmitOnChainTransactionHashT, TransferT } from "../types";
+import {
+  PayBillTransferT,
+  SubmitOnChainTransactionHashT,
+  TransferT,
+} from "../types";
 
 export async function createTransferIn(payload: TransferT) {
   try {
@@ -84,5 +88,22 @@ export async function submitOnChainTransactionHash(
     if (error instanceof Error) {
       throw new Error(`OneRamp API Error: ${error.message}`);
     }
+  }
+}
+
+export async function createPayBillTransfer(payload: PayBillTransferT) {
+  try {
+    const response = await OneRamp.createPayBillTransfer(payload);
+
+    if (!response) {
+      throw new Error("No response from OneRamp API");
+    }
+
+    return response;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`OneRamp API Error: ${error.message}`);
+    }
+    throw new Error("Failed to create pay bill transfer");
   }
 }
