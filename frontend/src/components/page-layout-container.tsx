@@ -18,9 +18,7 @@ const PageLayoutContainer = ({ children }: PageLayoutContainerProps) => {
           </div>
 
           {/* Fixed Bottom Navigation with higher z-index */}
-          <div className="relative z-20">
-            <MainTabs />
-          </div>
+          <MainTabs />
         </div>
       </div>
     </WalletGuard>
