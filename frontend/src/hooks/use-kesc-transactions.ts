@@ -2,7 +2,7 @@
 
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
 import { useCallback, useEffect, useState } from "react";
-import { decodeEventLog, formatUnits, parseAbiItem, Log } from "viem";
+import { decodeEventLog, formatUnits, parseAbiItem, Log, AbiEvent } from "viem";
 import { useAccount, usePublicClient, useWatchContractEvent } from "wagmi";
 
 export type Transaction = {
@@ -212,7 +212,7 @@ export function useKescTransactions() {
   // Function to fetch logs in chunks to avoid timeouts
   const fetchLogsInChunks = useCallback(
     async (
-      eventAbi: any,
+      eventAbi: AbiEvent,
       fromBlock: bigint,
       toBlock: bigint
     ): Promise<Log[]> => {
