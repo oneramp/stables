@@ -5,8 +5,8 @@ import type { AppKitNetwork } from "@reown/appkit/networks";
 import { anvil } from "./chains";
 
 // Get projectId from https://cloud.reown.com
-export const projectId =
-  process.env.NEXT_PUBLIC_PROJECT_ID || "72d9f10ab6e67c3e8ed81cb9fc7d6c29"; // this is a public projectId only to use on localhost
+export const projectId = "5175fef48e45eaa35b29009c6a3b8f77";
+// process.env.NEXT_PUBLIC_PROJECT_ID || "72d9f10ab6e67c3e8ed81cb9fc7d6c29"; // this is a public projectId only to use on localhost
 
 if (!projectId) {
   throw new Error("Project ID is not defined");
