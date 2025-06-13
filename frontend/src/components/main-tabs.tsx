@@ -1,10 +1,9 @@
-import { Button } from "./ui/button";
-import { IoHomeSharp } from "react-icons/io5";
-import { BiSolidSend } from "react-icons/bi";
-import { GrGrow } from "react-icons/gr";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { GrGrow } from "react-icons/gr";
+import { BiSolidSend } from "react-icons/bi";
+import { IoHomeSharp } from "react-icons/io5";
 
 const MainTabs = () => {
   const pathname = usePathname();

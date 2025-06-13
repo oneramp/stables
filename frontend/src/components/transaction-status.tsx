@@ -37,11 +37,9 @@ interface TransactionStatusProps {
 const TransactionStatus = ({
   status: initialStatus,
   amount,
-  reference,
   agent,
   date,
   time,
-  fee,
   type,
   onDone,
   onTryAgain,

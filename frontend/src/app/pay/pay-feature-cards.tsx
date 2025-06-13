@@ -1,10 +1,9 @@
 "use client";
 import FeatureBtn from "@/components/buttons/feature-btn";
-import { FaCircleArrowDown, FaCircleArrowRight } from "react-icons/fa6";
-import { FaCircleArrowUp } from "react-icons/fa6";
-import React, { useState } from "react";
-import ReceiveActionSheet from "@/components/receive-action-sheet";
 import PayBillActionSheet from "@/components/paybill-action-sheet";
+import ReceiveActionSheet from "@/components/receive-action-sheet";
+import { useState } from "react";
+import { FaCircleArrowDown, FaCircleArrowUp } from "react-icons/fa6";
 
 const PayFeatureCards = () => {
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);

@@ -1,7 +1,7 @@
 import { type Address } from "viem";
 
-export const KESC_ADDRESS =
-  "0x5FbDB2315678afecb367f032d93F642f64180aa3" as Address;
+export const KESC_ADDRESS = process.env
+  .NEXT_PUBLIC_KESC_CONTRACT_ADDRESS as Address;
 
 export const KESC_ABI = [
   {

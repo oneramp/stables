@@ -1,9 +1,9 @@
 "use client";
 
-import { useAccount, useWatchContractEvent, usePublicClient } from "wagmi";
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import { useEffect, useState } from "react";
-import { Log, parseAbiItem, decodeEventLog, formatUnits } from "viem";
+import { useCallback, useEffect, useState } from "react";
+import { decodeEventLog, formatUnits, parseAbiItem } from "viem";
+import { useAccount, usePublicClient, useWatchContractEvent } from "wagmi";
 
 export type Transaction = {
   id: string;
@@ -69,8 +69,8 @@ export function useKescTransactions() {
     });
   };
 
-  // Function to load historical transactions
-  const loadHistoricalTransactions = async () => {
+  // Wrap loadHistoricalTransactions in useCallback
+  const loadHistoricalTransactions = useCallback(async () => {
     if (!address || !publicClient) {
       return;
     }
@@ -241,16 +241,16 @@ export function useKescTransactions() {
     } catch (error) {
       console.error("Error loading historical transactions:", error);
     }
-  };
+  }, [address, publicClient]); // Add dependencies
 
   // Function to manually refresh transactions
-  const refresh = () => {
+  const refresh = useCallback(() => {
     loadHistoricalTransactions();
-  };
+  }, [loadHistoricalTransactions]);
 
   useEffect(() => {
     loadHistoricalTransactions();
-  }, [address, publicClient]);
+  }, [loadHistoricalTransactions]);
 
   // Watch for Transfer events
   useWatchContractEvent({

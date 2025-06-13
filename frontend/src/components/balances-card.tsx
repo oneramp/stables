@@ -1,22 +1,19 @@
 "use client";
-import { ArrowDownToLine, Plus } from "lucide-react";
-import Image from "next/image";
-import { TbChevronCompactDown } from "react-icons/tb";
-import { Button } from "./ui/button";
-import { useState } from "react";
-import BuyActionSheet from "./buy-action-sheet";
-import SellActionSheet from "./sell-action-sheet";
-import ReceiveActionSheet from "./receive-action-sheet";
+import PayFeatureCards from "@/app/pay/pay-feature-cards";
 import { useKescBalance } from "@/hooks/use-kesc-balance";
-import { useAccount } from "wagmi";
-import FeatureBtn from "./buttons/feature-btn";
+import { useState } from "react";
 import {
   FaCircleArrowDown,
   FaCircleArrowRight,
   FaCircleArrowUp,
 } from "react-icons/fa6";
+import { TbChevronCompactDown } from "react-icons/tb";
+import { useAccount } from "wagmi";
+import FeatureBtn from "./buttons/feature-btn";
+import BuyActionSheet from "./buy-action-sheet";
+import ReceiveActionSheet from "./receive-action-sheet";
+import SellActionSheet from "./sell-action-sheet";
 import SendActionSheet from "./send-action-sheet";
-import PayFeatureCards from "@/app/pay/pay-feature-cards";
 
 const BalancesCard = ({ pay }: { pay?: boolean }) => {
   const [isBuyOpen, setIsBuyOpen] = useState(false);

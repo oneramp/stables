@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { BsChevronDoubleDown } from "react-icons/bs";
 import { createTransferIn } from "../../actions/transfer";
 import { getQuoteIn } from "../../actions/quote";
-import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
+import { CHAIN, COUNTRY, OPERATOR, MINMAX } from "../../constants";
 import { countries, MOCK_USER_DETAILS } from "../../data";
 import { QuoteT, TransferT } from "../../types";
 import OrderSummaryCard from "./order-summary-card";
@@ -31,6 +31,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
   const setTransferData = useTransferStore((state) => state.setTransferData);
   const { quoteData, setQuoteData, clearQuoteData } = useQuoteStore();
 
@@ -45,12 +46,45 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
     formState: { errors, isSubmitting },
     reset,
     setError: setFormError,
+    watch,
+    setValue,
   } = useForm<QuoteFormData>({
     resolver: zodResolver(quoteSchema),
   });
 
+  // Watch the amount field for validation
+  const amount = watch("amount");
+
+  // Validate amount against MINMAX
+  const validateAmount = (value: string) => {
+    const numValue = parseFloat(value);
+    if (value && (numValue < MINMAX.MIN || numValue > MINMAX.MAX)) {
+      setAmountError(
+        `Amount must be between ${MINMAX.MIN} and ${MINMAX.MAX} KESC`
+      );
+      return false;
+    }
+    setAmountError(null);
+    return true;
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers and one decimal point
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (value === "" || regex.test(value)) {
+      setValue("amount", value);
+      validateAmount(value);
+    }
+  };
+
   const onSubmit = async (data: QuoteFormData) => {
     try {
+      // Validate amount before proceeding
+      if (!validateAmount(data.amount)) {
+        return;
+      }
+
       // Clear any previous errors and data
       setError(null);
       clearQuoteData();
@@ -69,6 +103,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
       setTransactionState("processing");
 
       const country = countries[COUNTRY];
+
       if (!country) {
         setError("Invalid country configuration");
         setTransactionState("cancelled");
@@ -149,6 +184,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   };
 
   const handleTryAgain = () => {
+    reset();
     setTransactionState("input");
     setError(null);
     clearQuoteData();
@@ -201,7 +237,13 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
       >
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
-          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
+          <div
+            className={`space-y-1 border-[1px] ${
+              amountError
+                ? "bg-red-50 border-red-300"
+                : "bg-neutral-100 border-gray-200"
+            } p-3 rounded-xl transition-colors duration-200`}
+          >
             <Label
               className="text-sm font-light text-muted-foreground"
               htmlFor="amount"
@@ -212,12 +254,21 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
               id="amount"
               type="text"
               placeholder="12,3455"
-              {...register("amount")}
-              className="px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
+              value={amount || ""}
+              onChange={handleAmountChange}
+              className={`px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none ${
+                amountError ? "text-red-600" : ""
+              }`}
             />
-            {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount.message}</p>
-            )}
+            <div className="flex justify-between items-center">
+              {amountError ? (
+                <p className="text-sm text-red-500">{amountError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Valid range: {MINMAX.MIN} - {MINMAX.MAX} KESC
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Phone Number Input */}

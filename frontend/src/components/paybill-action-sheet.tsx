@@ -13,9 +13,13 @@ import {
   createPayBillTransfer,
   submitOnChainTransactionHash,
 } from "../../actions/transfer";
-import { CHAIN, COUNTRY } from "../../constants";
+import { CHAIN, COUNTRY, MINMAX } from "../../constants";
 import { countries } from "../../data";
-import { PayBillQuoteT, PayBillTransferT } from "../../types";
+import {
+  FullQuoteResponseT,
+  PayBillQuoteT,
+  PayBillTransferT,
+} from "../../types";
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
 import { parseEther } from "viem";
 import { useWaitForTransactionReceipt, useWriteContract } from "wagmi";
@@ -29,28 +33,15 @@ interface PayBillActionSheetProps {
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
 
-// Define keypad letters - reused from ReceiveActionSheet
-const KEYPAD_LETTERS: { [key: string]: string } = {
-  "1": "",
-  "2": "ABC",
-  "3": "DEF",
-  "4": "GHI",
-  "5": "JKL",
-  "6": "MNO",
-  "7": "PQRS",
-  "8": "TUV",
-  "9": "WXYZ",
-  "0": "",
-};
-
 const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
   const [businessNumber, setBusinessNumber] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [amount, setAmount] = useState("");
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
-  const [quoteData, setQuoteData] = useState<any>(null);
+  const [quoteData, setQuoteData] = useState<FullQuoteResponseT | null>(null);
 
   const setTransferData = useTransferStore((state) => state.setTransferData);
   const transferData = useTransferStore((state) => state.transferData);
@@ -61,18 +52,28 @@ const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
 
   const { writeContract, data: hash } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const handleAmountChange = (value: string) => {
     // Only allow numbers and one decimal point
     const regex = /^\d*\.?\d{0,2}$/;
     if (value === "" || regex.test(value)) {
-      // Check if the amount is within valid range
-      if (value === "" || parseFloat(value) <= 999999.99) {
-        setAmount(value);
+      setAmount(value);
+
+      // Only validate if there's a value
+      if (value) {
+        const numValue = parseFloat(value);
+        if (numValue < MINMAX.MIN || numValue > MINMAX.MAX) {
+          setAmountError(
+            `Amount must be between ${MINMAX.MIN} and ${MINMAX.MAX} KESC`
+          );
+        } else {
+          setAmountError(null);
+        }
+      } else {
+        setAmountError(null);
       }
     }
   };
@@ -204,14 +205,18 @@ const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
     }
   }, [isConfirmed, hash, transferData?.transferId]);
 
+  const resetForm = () => {
+    setBusinessNumber("");
+    setAccountNumber("");
+    setAmount("");
+  };
+
   const handleDone = () => {
     setTransactionState("input");
     setError(null);
     setQuoteData(null);
     setTransferData(null);
-    setBusinessNumber("");
-    setAccountNumber("");
-    setAmount("");
+    resetForm();
     onClose();
 
     // Refetch all wallet balances and transactions
@@ -303,7 +308,13 @@ const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
           </div>
 
           {/* Amount Input */}
-          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
+          <div
+            className={`space-y-1 border-[1px] ${
+              amountError
+                ? "bg-red-50 border-red-300"
+                : "border-gray-200 bg-neutral-100"
+            } p-3 rounded-xl transition-colors duration-200`}
+          >
             <Label
               className="text-sm font-light text-muted-foreground"
               htmlFor="amount"
@@ -316,8 +327,18 @@ const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.00"
-              className="px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
+              className={`px-0 !text-3xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none ${
+                amountError ? "text-red-600" : ""}`}
             />
+            <div className="flex justify-between items-center">
+              {amountError ? (
+                <p className="text-sm text-red-500">{amountError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Valid range: {MINMAX.MIN} - {MINMAX.MAX} KESC
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Pay Button */}
@@ -328,7 +349,8 @@ const PayBillActionSheet = ({ isOpen, onClose }: PayBillActionSheetProps) => {
                 !businessNumber ||
                 !accountNumber ||
                 !amount ||
-                parseFloat(amount) === 0
+                parseFloat(amount) === 0 ||
+                !!amountError
               }
               className="p-6 w-full text-base text-white rounded-full border-none hover:bg-primary/90"
             >

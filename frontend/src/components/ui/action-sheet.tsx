@@ -1,7 +1,6 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Button } from "./button";
-import { cn } from "@/lib/utils";
 
 interface ActionSheetProps {
   isOpen: boolean;

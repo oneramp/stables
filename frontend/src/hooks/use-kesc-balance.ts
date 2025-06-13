@@ -2,7 +2,7 @@
 
 import { useAccount, useReadContract, useWatchContractEvent } from "wagmi";
 import { KESC_ABI, KESC_ADDRESS } from "@/config/contracts";
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 
 export function useKescBalance() {
   const { address } = useAccount();

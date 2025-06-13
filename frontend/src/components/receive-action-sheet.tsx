@@ -46,7 +46,7 @@ const ReceiveActionSheet = ({ isOpen, onClose }: ReceiveActionSheetProps) => {
     } else {
       setAmount((prev) => {
         const newAmount = prev + num;
-        const [whole, decimal] = newAmount.split(".");
+        const [decimal] = newAmount.split(".");
         if (decimal && decimal.length > 2) return prev;
         if (parseFloat(newAmount) > 999999.99) return prev;
         return newAmount;

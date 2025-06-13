@@ -1,12 +1,10 @@
 "use client";
-import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { useAppKitAccount } from "@reown/appkit/react";
 import Image from "next/image";
 import React from "react";
 
 const WalletGuard = ({ children }: { children: React.ReactNode }) => {
   const { isConnected } = useAppKitAccount();
-
-  const { chainId } = useAppKitNetwork();
 
   if (!isConnected) {
     return (

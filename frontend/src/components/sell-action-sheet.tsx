@@ -18,7 +18,7 @@ import {
   createTransferOut,
   submitOnChainTransactionHash,
 } from "../../actions/transfer";
-import { CHAIN, COUNTRY, OPERATOR } from "../../constants";
+import { CHAIN, COUNTRY, OPERATOR, MINMAX } from "../../constants";
 import { countries, MOCK_USER_DETAILS } from "../../data";
 import { QuoteT, TransferT } from "../../types";
 import OrderSummaryCard from "./order-summary-card";
@@ -39,6 +39,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   // Use separate selectors for each value
   const transferData = useTransferStore((state) => state.transferData);
@@ -62,13 +63,30 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
 
   const { writeContract, data: hash } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // Validate amount against MINMAX
+  const validateAmount = (value: string) => {
+    const numValue = parseFloat(value);
+    if (value && (numValue < MINMAX.MIN || numValue > MINMAX.MAX)) {
+      setAmountError(
+        `Amount must be between ${MINMAX.MIN} and ${MINMAX.MAX} KESC`
+      );
+      return false;
+    }
+    setAmountError(null);
+    return true;
+  };
 
   const onSubmit = async (data: QuoteFormData) => {
     try {
+      // Validate amount before proceeding
+      if (!validateAmount(data.amount)) {
+        return;
+      }
+
       // Clear any previous errors and data
       setError(null);
       clearQuoteData();
@@ -214,6 +232,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
     setError(null);
     clearQuoteData();
     setTransferData(null);
+    reset();
   };
 
   const getTitle = () => {
@@ -262,7 +281,13 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
       >
         <div className="flex-1 space-y-6">
           {/* Amount Input */}
-          <div className="space-y-1 border-[1px] bg-neutral-100 border-gray-200 p-3 rounded-xl">
+          <div
+            className={`space-y-1 border-[1px] ${
+              amountError
+                ? "bg-red-50 border-red-300"
+                : "border-gray-200 bg-neutral-100"
+            } p-3 rounded-xl transition-colors duration-200`}
+          >
             <Label
               className="text-sm font-light text-muted-foreground"
               htmlFor="amount"
@@ -273,12 +298,21 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
               id="amount"
               type="text"
               placeholder="12,3455"
-              {...register("amount")}
-              className="px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none"
+              {...register("amount", {
+                onChange: (e) => validateAmount(e.target.value),
+              })}
+              className={`px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none ${
+                amountError ? "text-red-600" : ""}`}
             />
-            {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount.message}</p>
-            )}
+            <div className="flex justify-between items-center">
+              {amountError ? (
+                <p className="text-sm text-red-500">{amountError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Valid range: {MINMAX.MIN} - {MINMAX.MAX} KESC
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Phone Number Input */}
