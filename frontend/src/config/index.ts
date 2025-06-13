@@ -1,8 +1,8 @@
 import { cookieStorage, createStorage } from "wagmi";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { mainnet, arbitrum, base, baseSepolia } from "@reown/appkit/networks";
+import { mainnet, arbitrum } from "@reown/appkit/networks";
 import type { AppKitNetwork } from "@reown/appkit/networks";
-import { anvil } from "./chains";
+import { anvil, base } from "./chains";
 
 // Get projectId from https://cloud.reown.com
 export const projectId = "5175fef48e45eaa35b29009c6a3b8f77";
@@ -12,9 +12,11 @@ if (!projectId) {
   throw new Error("Project ID is not defined");
 }
 
-export const networks = [mainnet, arbitrum, base, baseSepolia, anvil] as [
-  AppKitNetwork,
-  ...AppKitNetwork[]
+// Define supported networks
+export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [
+  mainnet,
+  arbitrum,
+  base,
 ];
 
 //Set up the Wagmi Adapter (Config)
