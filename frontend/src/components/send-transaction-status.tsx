@@ -1,8 +1,8 @@
 import React from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "./ui/button";
-import Confetti from "react-confetti";
-import { useWindowSize } from "react-use";
+// import Confetti from "react-confetti";
+// import { useWindowSize } from "react-use";
 
 interface SendTransactionStatusProps {
   status: "processing" | "success" | "cancelled";
@@ -48,7 +48,7 @@ const SendTransactionStatus = ({
 
   const config = statusConfig[status];
 
-  const { width, height } = useWindowSize();
+  // const { width, height } = useWindowSize();
 
   return (
     <div className="flex flex-col px-4 h-full">
@@ -63,7 +63,7 @@ const SendTransactionStatus = ({
             </div>
           </div>
 
-          {status === "success" && <Confetti width={width} height={height} />}
+          {/* {status === "success" && <Confetti width={width} height={height} />} */}
 
           {/* Transaction Info */}
           <div className="mb-8 text-center">
