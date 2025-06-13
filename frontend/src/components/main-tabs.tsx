@@ -27,7 +27,7 @@ const MainTabs = () => {
   ];
 
   return (
-    <div className="flex sticky bottom-0 z-10 flex-row gap-4 justify-between items-center w-full h-20 bg-white border-t-2">
+    <div className="flex flex-row gap-4 justify-between items-center w-full h-20 bg-white border-t-2">
       {tabs.map((tab) => (
         <Link
           key={tab.path}

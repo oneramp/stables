@@ -72,7 +72,7 @@ const RecentTransactions = ({
   if (transactions.length === 0) {
     return (
       <div className="py-8 w-full text-center text-gray-500">
-        No transactions found
+        {/* No transactions found */}
       </div>
     );
   }
