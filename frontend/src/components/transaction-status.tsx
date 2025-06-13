@@ -3,8 +3,8 @@ import { useTransferStore } from "@/store/transfer";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import React, { useEffect } from "react";
-import Confetti from "react-confetti";
-import { useWindowSize } from "react-use";
+// import Confetti from "react-confetti";
+// import { useWindowSize } from "react-use";
 import { getTransfer } from "../../actions/transfer";
 import { TransactionStatusType, TransferStatus } from "../../types";
 import { Button } from "./ui/button";
@@ -50,7 +50,7 @@ const TransactionStatus = ({
     React.useState<TransactionStatusType>(initialStatus);
   const [showCancelDialog, setShowCancelDialog] = React.useState(false);
 
-  const { width, height } = useWindowSize();
+  // const { width, height } = useWindowSize();
 
   const transfer = useQuery({
     queryKey: ["transfer", transferData?.transferId],
@@ -158,7 +158,7 @@ const TransactionStatus = ({
         </DialogContent>
       </Dialog>
 
-      {status === "success" && <Confetti width={width} height={height} />}
+      {/* {status === "success" && <Confetti width={width} height={height} />} */}
 
       <div className="flex flex-col px-4 h-full">
         <div className="flex-1">
