@@ -48,7 +48,7 @@ export function useAlchemyTransactions() {
             transfer.rawContract && transfer.rawContract.value
               ? transfer.rawContract.value
               : "0";
-          let amount = formatUnits(BigInt(rawValue), decimals);
+          const amount = formatUnits(BigInt(rawValue), decimals);
 
           return {
             id: transfer.hash,
