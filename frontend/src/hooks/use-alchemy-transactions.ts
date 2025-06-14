@@ -46,7 +46,7 @@ export function useAlchemyTransactions() {
               ? transfer.rawContract.value
               : "0";
           // Show the actual amount sent by the user
-          let amount = formatUnits(BigInt(rawValue), decimals);
+          const amount = formatUnits(BigInt(rawValue), decimals);
 
           return {
             id: transfer.hash,
@@ -69,7 +69,6 @@ export function useAlchemyTransactions() {
 
       setTransactions(sortedTransactions);
     } catch (error) {
-      console.error("Error fetching Alchemy transactions:", error);
       setError(
         error instanceof Error ? error.message : "Failed to fetch transactions"
       );
