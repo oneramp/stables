@@ -1,29 +1,21 @@
 "use client";
 
 import React from "react";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Send,
-  ReceiptIcon,
-  ArrowRight,
-} from "lucide-react";
+import { Send, ReceiptIcon, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  useKescTransactions,
-  type Transaction,
-} from "@/hooks/use-kesc-transactions";
+import { useAlchemyTransactions } from "@/hooks/use-alchemy-transactions";
 import { useAccount } from "wagmi";
 import { Button } from "./ui/button";
+import { AlchemyTransaction } from "../../types";
 
 interface RecentTransactionsProps {
-  transactions?: Transaction[];
+  transactions?: AlchemyTransaction[];
 }
 
 const RecentTransactions = ({
   transactions: propTransactions,
 }: RecentTransactionsProps) => {
-  const { transactions: hookTransactions } = useKescTransactions();
+  const { transactions: hookTransactions } = useAlchemyTransactions();
   const { isConnected } = useAccount();
 
   // Use provided transactions or hook transactions
@@ -72,48 +64,25 @@ const RecentTransactions = ({
   if (transactions.length === 0) {
     return (
       <div className="py-8 w-full text-center text-gray-500">
-        {/* No transactions found */}
+        No transactions found
       </div>
     );
   }
 
-  const getTransactionIcon = (type: Transaction["type"]) => {
-    switch (type) {
-      case "deposit":
-        return <ArrowDownLeft className="w-5 h-5 text-green-600" />;
-      case "sell":
-        return <ArrowUpRight className="w-5 h-5 text-orange-600" />;
-      case "send":
-        return <Send className="w-5 h-5 text-red-600" />;
-      case "receive":
-        return <ReceiptIcon className="w-5 h-5 text-blue-600" />;
-    }
+  const getTransactionIcon = (type: AlchemyTransaction["type"]) => {
+    return type === "send" ? (
+      <Send className="w-5 h-5 text-red-600" />
+    ) : (
+      <ReceiptIcon className="w-5 h-5 text-blue-600" />
+    );
   };
 
-  const getTransactionColor = (type: Transaction["type"]) => {
-    switch (type) {
-      case "deposit":
-        return "bg-green-100";
-      case "sell":
-        return "bg-orange-100";
-      case "send":
-        return "bg-red-100";
-      case "receive":
-        return "bg-blue-100";
-    }
+  const getTransactionColor = (type: AlchemyTransaction["type"]) => {
+    return type === "send" ? "bg-red-100" : "bg-blue-100";
   };
 
-  const getTransactionLabel = (type: Transaction["type"]) => {
-    switch (type) {
-      case "deposit":
-        return "Deposit";
-      case "sell":
-        return "Sale";
-      case "send":
-        return "Sent";
-      case "receive":
-        return "Received";
-    }
+  const getTransactionLabel = (type: AlchemyTransaction["type"]) => {
+    return type === "send" ? "Sent KESC" : "Received KESC";
   };
 
   return (
@@ -133,7 +102,7 @@ const RecentTransactions = ({
         {transactions.slice(0, 4).map((transaction, index) => (
           <div
             key={`${transaction.type}-${transaction.id}-${index}`}
-            className="flex items-center justify-between p-4 bg-transparent border-b-[1px] border-gray-200 "
+            className="flex items-center justify-between p-4 bg-transparent border-b-[1px] border-gray-200"
           >
             {/* Left side - Icon and type */}
             <div className="flex items-center space-x-3">
@@ -152,15 +121,12 @@ const RecentTransactions = ({
                 <p className="font-mono text-xs text-gray-400">
                   {transaction.id.slice(0, 6)}...{transaction.id.slice(-4)}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {formatDate(transaction.date)}
-                </p>
               </div>
             </div>
 
             {/* Right side - Amount and status */}
             <div className="text-right">
-              <p className="font-semibold">KES {transaction.amount}</p>
+              <p className="font-semibold">{transaction.amount} KESC</p>
               <p
                 className={cn(
                   "text-xs",

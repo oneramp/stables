@@ -1,3 +1,5 @@
+import { AssetTransfersCategory } from "alchemy-sdk";
+
 export type QuoteT = {
   fiatType: string;
   cryptoType: string;
@@ -213,3 +215,15 @@ export type FullQuoteResponseT = {
 //       }
 //   }
 // }
+
+export type AlchemyTransaction = {
+  id: string;
+  type: "send" | "receive" | "deposit" | "sell";
+  amount: string;
+  status: "success" | "pending" | "failed";
+  date: string;
+  from: string;
+  to: string;
+  blockNumber: bigint;
+  category: AssetTransfersCategory;
+};

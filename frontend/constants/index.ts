@@ -8,10 +8,10 @@ export const DEPLOYED_KESC_ADDRESS =
 
 export const MINMAX = {
   // UG
-  // MIN: 2000,
-  // MAX: 20000,
+  MIN: 2000,
+  MAX: 20000,
 
   // KE
-  MIN: 130,
-  MAX: 2000,
+  // MIN: 130,
+  // MAX: 2000,
 };
