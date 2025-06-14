@@ -4,6 +4,7 @@ import { alchemy } from "../actions/alchemy";
 import { formatUnits } from "viem";
 import { AssetTransfersCategory, AssetTransfersResult } from "alchemy-sdk";
 import { AlchemyTransaction } from "../../types";
+import { useTransactionRefreshStore } from "@/store/transactions";
 
 const KESC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_KESC_CONTRACT_ADDRESS;
 
@@ -18,6 +19,7 @@ export function useAlchemyTransactions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
+  const refreshCount = useTransactionRefreshStore((s) => s.refreshCount);
 
   const fetchTransactions = useCallback(async () => {
     if (!address || !KESC_CONTRACT_ADDRESS) return;
@@ -83,12 +85,13 @@ export function useAlchemyTransactions() {
   }, [address]);
 
   useEffect(() => {
+    console.log("REFETCH", refreshCount, address);
     if (address) {
       fetchTransactions();
     } else {
       setTransactions([]);
     }
-  }, [address, fetchTransactions]);
+  }, [address, fetchTransactions, refreshCount]);
 
   return {
     transactions,

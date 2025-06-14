@@ -17,6 +17,7 @@ import { useKescTransactions } from "@/hooks/use-kesc-transactions";
 import { useTransferStore } from "@/store/transfer";
 import { useQuoteStore } from "@/store/quote";
 import { useKescBalance } from "@/hooks/use-kesc-balance";
+import { useTransactionRefreshStore } from "@/store/transactions";
 
 interface SendActionSheetProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
 
   const { refetch } = useKescBalance();
   const { refresh } = useKescTransactions();
+  const { refreshTransactions: globalRefreshTransactions } =
+    useTransactionRefreshStore();
 
   // Check if sender is blacklisted
   const { data: isBlacklisted } = useReadContract({
@@ -78,6 +81,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     error: writeError,
     isPending,
     isError,
+    isSuccess,
   } = useWriteContract();
 
   // Watch for transaction receipt
@@ -92,19 +96,38 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
 
   // Watch for status changes
   useEffect(() => {
-    if (isPending || isConfirming) {
-      setTransactionState("processing");
-    } else if (isConfirmed) {
+    // Show success as soon as the transaction is sent and accepted
+    if (isSuccess) {
       setTransactionState("success");
-      // Refresh transactions after successful confirmation
       refreshTransactions();
-      // Also invalidate the balance cache
+      refresh();
+      globalRefreshTransactions();
       if (publicClient && address) {
         publicClient.getBalance({ address });
       }
-    } else if (isError || isReceiptError) {
+      return;
+    }
+
+    // If the transaction is confirmed, set to success and refresh (optional, for mined status)
+    if (isConfirmed) {
+      setTransactionState("success");
+      refreshTransactions();
+      refresh();
+      if (publicClient && address) {
+        publicClient.getBalance({ address });
+      }
+      return;
+    }
+
+    // If pending or confirming, set to processing
+    if (isPending || isConfirming) {
+      setTransactionState("processing");
+      return;
+    }
+
+    // If error, set to cancelled
+    if (isError || isReceiptError) {
       const errorMessage = writeError?.message || receiptError?.message;
-      // Parse common error messages into user-friendly format
       if (errorMessage?.includes("insufficient")) {
         setError("Insufficient balance");
       } else if (errorMessage?.includes("blacklisted")) {
@@ -119,6 +142,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   }, [
     isPending,
     isConfirming,
+    isSuccess,
     isConfirmed,
     isError,
     writeError,
@@ -128,6 +152,8 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     refreshTransactions,
     publicClient,
     address,
+    refresh,
+    globalRefreshTransactions,
   ]);
 
   const handleSubmit = async () => {
@@ -192,6 +218,8 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     // Refetch all wallet balances and transactions
     refetch();
     refresh();
+    refreshTransactions();
+    globalRefreshTransactions();
   };
 
   const handleTryAgain = () => {
