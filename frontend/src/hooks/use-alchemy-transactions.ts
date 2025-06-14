@@ -26,17 +26,20 @@ export function useAlchemyTransactions() {
     setError(null);
 
     try {
-      // First get all ERC20 transfers
+      // Remove fromAddress to get all transactions
       const data = await alchemy.core.getAssetTransfers({
         fromBlock: "0x0",
-        fromAddress: address,
         category: [AssetTransfersCategory.ERC20],
         contractAddresses: [KESC_CONTRACT_ADDRESS],
       });
 
-      const formattedTransactions: AlchemyTransaction[] = data.transfers.map(
-        (transfer: AssetTransfersResult) => {
-          // Detect decimals from the contract (hex to int)
+      const formattedTransactions: AlchemyTransaction[] = data.transfers
+        .filter(
+          (transfer: AssetTransfersResult) =>
+            transfer.from?.toLowerCase() === address.toLowerCase() ||
+            transfer.to?.toLowerCase() === address.toLowerCase()
+        )
+        .map((transfer: AssetTransfersResult) => {
           const decimals =
             transfer.rawContract && transfer.rawContract.decimal
               ? parseInt(transfer.rawContract.decimal, 16)
@@ -45,12 +48,14 @@ export function useAlchemyTransactions() {
             transfer.rawContract && transfer.rawContract.value
               ? transfer.rawContract.value
               : "0";
-          // Show the actual amount sent by the user
-          const amount = formatUnits(BigInt(rawValue), decimals);
+          let amount = formatUnits(BigInt(rawValue), decimals);
 
           return {
             id: transfer.hash,
-            type: transfer.from === address.toLowerCase() ? "send" : "receive",
+            type:
+              transfer.from?.toLowerCase() === address.toLowerCase()
+                ? "send"
+                : "receive",
             amount,
             status: "success" as const,
             date: new Date(Number(transfer.blockNum) * 1000).toISOString(),
@@ -59,8 +64,7 @@ export function useAlchemyTransactions() {
             blockNumber: BigInt(transfer.blockNum),
             category: transfer.category,
           };
-        }
-      );
+        });
 
       // Sort by block number (descending)
       const sortedTransactions = formattedTransactions.sort((a, b) => {
@@ -69,6 +73,7 @@ export function useAlchemyTransactions() {
 
       setTransactions(sortedTransactions);
     } catch (error) {
+      console.error("Error fetching Alchemy transactions:", error);
       setError(
         error instanceof Error ? error.message : "Failed to fetch transactions"
       );
