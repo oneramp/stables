@@ -18,6 +18,7 @@ const PageLayoutContainer = ({ children }: PageLayoutContainerProps) => {
           </div>
 
           {/* Fixed Bottom Navigation with higher z-index */}
+          <div className="w-full h-20 md:hidden"></div>
           <MainTabs />
         </div>
       </div>
