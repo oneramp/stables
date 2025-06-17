@@ -19,6 +19,7 @@ import { useTransferStore } from "@/store/transfer";
 import { useQuoteStore } from "@/store/quote";
 import { useKescBalance } from "@/hooks/use-kesc-balance";
 import { useKescTransactions } from "@/hooks/use-kesc-transactions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BuyActionSheetProps {
   isOpen: boolean;
@@ -26,6 +27,9 @@ interface BuyActionSheetProps {
 }
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
+
+// Get QueryClient from the context
+const queryClient = useQueryClient();
 
 const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
   const [transactionState, setTransactionState] =
@@ -181,6 +185,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
     // Refetch all wallet balances and transactions
     refetch();
     refresh();
+    queryClient.invalidateQueries();
   };
 
   const handleTryAgain = () => {
@@ -241,7 +246,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
             className={`space-y-1 border-[1px] ${
               amountError
                 ? "bg-red-50 border-red-300"
-                : "bg-neutral-100 border-gray-200"
+                : "border-gray-200 bg-neutral-100"
             } p-3 rounded-xl transition-colors duration-200`}
           >
             <Label

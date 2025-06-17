@@ -27,6 +27,7 @@ import ActionSheet from "./ui/action-sheet";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SellActionSheetProps {
   isOpen: boolean;
@@ -34,6 +35,9 @@ interface SellActionSheetProps {
 }
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
+
+// Get QueryClient from the context
+const queryClient = useQueryClient();
 
 const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
   const [transactionState, setTransactionState] =
@@ -225,6 +229,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
     // Refetch all wallet balances and transactions
     refetch();
     refresh();
+    queryClient.invalidateQueries();
   };
 
   const handleTryAgain = () => {
@@ -302,7 +307,8 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
                 onChange: (e) => validateAmount(e.target.value),
               })}
               className={`px-0 !text-4xl !tracking-tight !font-semibold !bg-transparent !shadow-none !border-none !outline-none !outline-0 !ring-0 focus:!ring-0 focus-visible:!ring-0 focus:!outline-none focus-visible:!outline-none ${
-                amountError ? "text-red-600" : ""}`}
+                amountError ? "text-red-600" : ""
+              }`}
             />
             <div className="flex justify-between items-center">
               {amountError ? (

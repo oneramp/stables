@@ -18,6 +18,7 @@ import { useTransferStore } from "@/store/transfer";
 import { useQuoteStore } from "@/store/quote";
 import { useKescBalance } from "@/hooks/use-kesc-balance";
 import { useTransactionRefreshStore } from "@/store/transactions";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SendActionSheetProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ interface SendActionSheetProps {
 }
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
+
+// Get QueryClient from the context
+const queryClient = useQueryClient();
 
 const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
   const [transactionState, setTransactionState] =
@@ -220,6 +224,7 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
     refresh();
     refreshTransactions();
     globalRefreshTransactions();
+    queryClient.invalidateQueries();
   };
 
   const handleTryAgain = () => {

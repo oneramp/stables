@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import ActionSheet from "./ui/action-sheet";
 import { Button } from "./ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ReceiveActionSheetProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ const KEYPAD_LETTERS: { [key: string]: string } = {
   "9": "WXYZ",
   "0": "",
 };
+
+// Get QueryClient from the context
+const queryClient = useQueryClient();
 
 const ReceiveActionSheet = ({ isOpen, onClose }: ReceiveActionSheetProps) => {
   const { address } = useAccount();
@@ -209,6 +213,7 @@ const ReceiveActionSheet = ({ isOpen, onClose }: ReceiveActionSheetProps) => {
         onClose();
         setStep("amount");
         setAmount("");
+        queryClient.invalidateQueries();
       }}
       title={step === "amount" ? "Enter Amount" : "Receive KESC"}
     >
