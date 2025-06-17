@@ -18,7 +18,6 @@ const RecentTransactions = ({
   const { transactions: hookTransactions } = useAlchemyTransactions();
   const { isConnected } = useAccount();
 
-  // Use provided transactions or hook transactions
   const transactions = propTransactions || hookTransactions;
 
   if (!isConnected) {
