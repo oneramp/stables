@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { alchemy } from "../actions/alchemy";
 import { formatUnits } from "viem";
@@ -14,90 +14,80 @@ if (!KESC_CONTRACT_ADDRESS) {
   );
 }
 
+async function fetchAlchemyTransactions(
+  address: string
+): Promise<AlchemyTransaction[]> {
+  if (!address || !KESC_CONTRACT_ADDRESS) {
+    return [];
+  }
+
+  const data = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    category: [AssetTransfersCategory.ERC20],
+    contractAddresses: [KESC_CONTRACT_ADDRESS],
+  });
+
+  const formattedTransactions: AlchemyTransaction[] = data.transfers
+    .filter(
+      (transfer: AssetTransfersResult) =>
+        transfer.from?.toLowerCase() === address.toLowerCase() ||
+        transfer.to?.toLowerCase() === address.toLowerCase()
+    )
+    .map((transfer: AssetTransfersResult) => {
+      const decimals =
+        transfer.rawContract && transfer.rawContract.decimal
+          ? parseInt(transfer.rawContract.decimal, 16)
+          : 18; // fallback to 18 if not present
+      const rawValue =
+        transfer.rawContract && transfer.rawContract.value
+          ? transfer.rawContract.value
+          : "0";
+      const amount = formatUnits(BigInt(rawValue), decimals);
+
+      return {
+        id: transfer.hash,
+        type:
+          transfer.from?.toLowerCase() === address.toLowerCase()
+            ? "send"
+            : "receive",
+        amount,
+        status: "success" as const,
+        date: new Date(Number(transfer.blockNum) * 1000).toISOString(),
+        from: transfer.from,
+        to: transfer.to || "",
+        blockNumber: BigInt(transfer.blockNum),
+        category: transfer.category,
+      };
+    });
+
+  // Sort by block number (descending)
+  return formattedTransactions.sort((a, b) => {
+    return Number(b.blockNumber - a.blockNumber);
+  });
+}
+
 export function useAlchemyTransactions() {
-  const [transactions, setTransactions] = useState<AlchemyTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
   const refreshCount = useTransactionRefreshStore((s) => s.refreshCount);
 
-  const fetchTransactions = useCallback(async () => {
-    if (!address || !KESC_CONTRACT_ADDRESS) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Remove fromAddress to get all transactions
-      const data = await alchemy.core.getAssetTransfers({
-        fromBlock: "0x0",
-        category: [AssetTransfersCategory.ERC20],
-        contractAddresses: [KESC_CONTRACT_ADDRESS],
-      });
-
-      const formattedTransactions: AlchemyTransaction[] = data.transfers
-        .filter(
-          (transfer: AssetTransfersResult) =>
-            transfer.from?.toLowerCase() === address.toLowerCase() ||
-            transfer.to?.toLowerCase() === address.toLowerCase()
-        )
-        .map((transfer: AssetTransfersResult) => {
-          const decimals =
-            transfer.rawContract && transfer.rawContract.decimal
-              ? parseInt(transfer.rawContract.decimal, 16)
-              : 18; // fallback to 18 if not present
-          const rawValue =
-            transfer.rawContract && transfer.rawContract.value
-              ? transfer.rawContract.value
-              : "0";
-          const amount = formatUnits(BigInt(rawValue), decimals);
-
-          return {
-            id: transfer.hash,
-            type:
-              transfer.from?.toLowerCase() === address.toLowerCase()
-                ? "send"
-                : "receive",
-            amount,
-            status: "success" as const,
-            date: new Date(Number(transfer.blockNum) * 1000).toISOString(),
-            from: transfer.from,
-            to: transfer.to || "",
-            blockNumber: BigInt(transfer.blockNum),
-            category: transfer.category,
-          };
-        });
-
-      // Sort by block number (descending)
-      const sortedTransactions = formattedTransactions.sort((a, b) => {
-        return Number(b.blockNumber - a.blockNumber);
-      });
-
-      setTransactions(sortedTransactions);
-    } catch (error) {
-      console.error("Error fetching Alchemy transactions:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch transactions"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [address]);
-
-  useEffect(() => {
-    console.log("REFETCH", refreshCount, address);
-    if (address) {
-      fetchTransactions();
-    } else {
-      setTransactions([]);
-    }
-  }, [address, fetchTransactions, refreshCount]);
+  const {
+    data: transactions = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["alchemy-transactions", address, refreshCount],
+    queryFn: () => fetchAlchemyTransactions(address!),
+    enabled: !!address,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  });
 
   return {
     transactions,
-    refresh: fetchTransactions,
+    refresh: refetch,
     isLoading,
-    error,
+    error: error?.message || null,
     hasTransactions: transactions.length > 0,
   };
 }
