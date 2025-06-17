@@ -36,10 +36,10 @@ interface SellActionSheetProps {
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
 
-// Get QueryClient from the context
-const queryClient = useQueryClient();
-
 const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
+  // Get QueryClient from the context
+  const queryClient = useQueryClient();
+
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [error, setError] = useState<string | null>(null);

@@ -27,10 +27,10 @@ interface SendActionSheetProps {
 
 type TransactionState = "input" | "processing" | "success" | "cancelled";
 
-// Get QueryClient from the context
-const queryClient = useQueryClient();
-
 const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
+  // Get QueryClient from the context
+  const queryClient = useQueryClient();
+
   const [transactionState, setTransactionState] =
     useState<TransactionState>("input");
   const [amount, setAmount] = useState("");

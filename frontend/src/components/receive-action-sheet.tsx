@@ -27,14 +27,14 @@ const KEYPAD_LETTERS: { [key: string]: string } = {
   "0": "",
 };
 
-// Get QueryClient from the context
-const queryClient = useQueryClient();
-
 const ReceiveActionSheet = ({ isOpen, onClose }: ReceiveActionSheetProps) => {
   const { address } = useAccount();
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<Step>("amount");
+
+  // Get QueryClient from the context
+  const queryClient = useQueryClient();
 
   const handleCopy = async () => {
     if (address) {
