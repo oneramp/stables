@@ -69,9 +69,9 @@ const TransactionStatus = ({
         case TransferStatus.TransferComplete:
           setStatus("success");
           break;
-        case TransferStatus.TransferFailed:
-          setStatus("cancelled");
-          break;
+        // case TransferStatus.TransferFailed:
+        //   setStatus("cancelled");
+        // break;
         case TransferStatus.TransferStarted:
           setStatus("processing");
           break;
