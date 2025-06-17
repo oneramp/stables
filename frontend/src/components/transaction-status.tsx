@@ -1,6 +1,6 @@
 import { useQuoteStore } from "@/store/quote";
 import { useTransferStore } from "@/store/transfer";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import React, { useEffect } from "react";
 // import Confetti from "react-confetti";
