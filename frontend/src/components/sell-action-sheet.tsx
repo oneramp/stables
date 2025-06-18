@@ -346,19 +346,42 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
           </div>
 
           {/* Transaction Summary */}
-          <OrderSummaryCard />
+          <OrderSummaryCard
+            youPay={
+              quoteData?.quote?.cryptoAmount
+                ? `${quoteData.quote.cryptoAmount} KESC`
+                : "0.00 KESC"
+            }
+            youGet={
+              quoteData?.quote?.amountPaid
+                ? `KES ${quoteData.quote.amountPaid}`
+                : "KES 0.00"
+            }
+            exchangeRate={
+              quoteData?.quote?.amountPaid &&
+              quoteData?.quote?.cryptoAmount &&
+              Number(quoteData.quote.cryptoAmount) !== 0
+                ? `1 KESC = ${(
+                    Number(quoteData.quote.amountPaid) /
+                    Number(quoteData.quote.cryptoAmount)
+                  ).toFixed(2)} KES`
+                : "1 KESC = 1 KES"
+            }
+            payLabel="You Sell"
+            getLabel="You Receive"
+          />
+          <div className="flex justify-center items-center w-full">
+            <Button
+              type="submit"
+              className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Processing..." : "Initiate Sale"}
+            </Button>
+          </div>
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center items-center pt-6 w-full">
-          <Button
-            type="submit"
-            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Processing..." : "Initiate Sale"}
-          </Button>
-        </div>
       </form>
     </ActionSheet>
   );

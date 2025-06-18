@@ -307,18 +307,18 @@ const SendActionSheet = ({ isOpen, onClose }: SendActionSheetProps) => {
           </div>
 
           {error && <div className="mt-2 text-sm text-red-500">{error}</div>}
+          <div className="flex justify-center items-center pt-6 w-full">
+            <Button
+              className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
+              onClick={handleSubmit}
+              disabled={!amount || !recipientAddress || isPending}
+            >
+              {isPending ? "Sending..." : "Send KESC"}
+            </Button>
+          </div>
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-center items-center pt-6 w-full">
-          <Button
-            className="p-6 w-full text-base text-white bg-black rounded-full hover:bg-black/90"
-            onClick={handleSubmit}
-            disabled={!amount || !recipientAddress || isPending}
-          >
-            {isPending ? "Sending..." : "Send KESC"}
-          </Button>
-        </div>
       </div>
     </ActionSheet>
   );
