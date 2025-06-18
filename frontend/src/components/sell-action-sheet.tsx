@@ -301,7 +301,7 @@ const SellActionSheet = ({ isOpen, onClose }: SellActionSheetProps) => {
             </Label>
             <Input
               id="amount"
-              type="text"
+              type="number"
               placeholder="12,3455"
               {...register("amount", {
                 onChange: (e) => validateAmount(e.target.value),

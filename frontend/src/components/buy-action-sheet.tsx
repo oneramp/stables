@@ -257,7 +257,7 @@ const BuyActionSheet = ({ isOpen, onClose }: BuyActionSheetProps) => {
             </Label>
             <Input
               id="amount"
-              type="text"
+              type="number"
               placeholder="12,3455"
               value={amount || ""}
               onChange={handleAmountChange}
