@@ -1,14 +1,14 @@
 "use client";
 
-import BalancesCard from "@/components/balances-card";
 import PageLayoutContainer from "@/components/page-layout-container";
 import RecentTransactions from "@/components/recent-transactions";
+import StakeBalances from "./stake-balances";
 
 export default function StakePage() {
   return (
     <PageLayoutContainer>
       {/* Amount Display */}
-      <BalancesCard />
+      <StakeBalances />
 
       {/* Recent Transactions */}
       <RecentTransactions />
